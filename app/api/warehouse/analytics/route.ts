@@ -9,10 +9,10 @@ export async function GET() {
     const warehouses = await prisma.warehouses_online.findMany({
       where: { isDeleted: false },
       include: {
-        sale: {
+        consultation: {
           where: { isDeleted: false },
           include: {
-            saleItems: true
+            consultationItems: true
           }
         },
         products: {
@@ -21,7 +21,7 @@ export async function GET() {
         users: {
           where: { isDeleted: false }
         },
-        customer: {
+        student: {
           where: { isDeleted: false }
         }
       }
@@ -29,11 +29,11 @@ export async function GET() {
 
     // Calculate analytics for each warehouse
     const warehouseAnalytics = warehouses.map(warehouse => {
-      const totalSales = warehouse.sale.reduce((sum, sale) => sum + (sale.grandTotal || 0), 0);
-      const totalOrders = warehouse.sale.length;
+      const totalSales = warehouse.consultation.reduce((sum, sale) => sum + (sale.grandTotal || 0), 0);
+      const totalOrders = warehouse.consultation.length;
       const totalProducts = warehouse.products.length;
       const totalUsers = warehouse.users.length;
-      const totalCustomers = warehouse.customer.length;
+      const totalStudents = warehouse.student.length;
 
       // Low stock products (quantity <= 10)
       const lowStockProducts = warehouse.products.filter(product => product.quantity <= 10).length;
@@ -42,7 +42,7 @@ export async function GET() {
       const sixMonthsAgo = new Date();
       sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
 
-      const recentSales = warehouse.sale.filter(sale => 
+      const recentSales = warehouse.consultation.filter(sale => 
         new Date(sale.createdAt) >= sixMonthsAgo
       );
 
@@ -73,7 +73,7 @@ export async function GET() {
           totalOrders,
           totalProducts,
           totalUsers,
-          totalCustomers,
+          totalStudents,
           lowStockProducts,
           avgOrderValue: totalOrders > 0 ? totalSales / totalOrders : 0,
           monthlyData: monthlyData.slice(-6) // Last 6 months
@@ -121,15 +121,15 @@ export async function POST(req: NextRequest) {
         isDeleted: false 
       },
       include: {
-        sale: {
+        consultation: {
           where: { isDeleted: false },
           include: {
-            saleItems: {
+            consultationItems: {
               include: {
-                Product_online: true
+                product:true
               }
             },
-            Customer_online: true
+            selectedStudent: true
           },
           orderBy: { createdAt: 'desc' }
         },
@@ -139,7 +139,7 @@ export async function POST(req: NextRequest) {
         users: {
           where: { isDeleted: false }
         },
-        customer: {
+        student: {
           where: { isDeleted: false }
         }
       }
@@ -153,11 +153,11 @@ export async function POST(req: NextRequest) {
     }
 
     // Calculate detailed analytics
-    const totalSales = warehouse.sale.reduce((sum, sale) => sum + (sale.grandTotal || 0), 0);
-    const totalOrders = warehouse.sale.length;
+    const totalSales = warehouse.consultation.reduce((sum, sale) => sum + (sale.grandTotal || 0), 0);
+    const totalOrders = warehouse.consultation.length;
     const totalProducts = warehouse.products.length;
     const totalUsers = warehouse.users.length;
-    const totalCustomers = warehouse.customer.length;
+    const totalStudents = warehouse.student.length;
 
     // Monthly sales data for last 12 months
     const twelveMonthsAgo = new Date();
@@ -170,7 +170,7 @@ export async function POST(req: NextRequest) {
       const monthStart = new Date(date.getFullYear(), date.getMonth(), 1);
       const monthEnd = new Date(date.getFullYear(), date.getMonth() + 1, 0);
       
-      const monthSales = warehouse.sale.filter(sale => {
+      const monthSales = warehouse.consultation.filter(sale => {
         const saleDate = new Date(sale.createdAt);
         return saleDate >= monthStart && saleDate <= monthEnd;
       });
@@ -188,11 +188,11 @@ export async function POST(req: NextRequest) {
 
     // Top selling products
     const productSales: any = {};
-    warehouse.sale.forEach(sale => {
-      sale.saleItems.forEach(item => {
+    warehouse.consultation.forEach(consult => {
+      consult.consultationItems.forEach(item => {
         if (!productSales[item.id]) {
           productSales[item.id] = {
-            productId: item.product_onlineId,
+            productId: item.consultationId,
             productName: item.productName,
             totalQuantity: 0,
             totalRevenue: 0,
@@ -216,21 +216,21 @@ export async function POST(req: NextRequest) {
 
     // Customer analytics
     const customerPurchases: any = {};
-    warehouse.sale.forEach(sale => {
-      if (sale.customer_onlineId) {
-        if (!customerPurchases[sale.customer_onlineId]) {
-          customerPurchases[sale.customer_onlineId] = {
-            customerId: sale.customer_onlineId,
-            customerName: sale.Customer_online?.name || 'Unknown',
+    warehouse.consultation.forEach(sale => {
+      if (sale.selectedStudentId) {
+        if (!customerPurchases[sale.selectedStudentId]) {
+          customerPurchases[sale.selectedStudentId] = {
+            customerId: sale.selectedStudentId,
+            customerName: sale.selectedStudent?.name || 'Unknown',
             totalSpent: 0,
             totalOrders: 0,
             lastPurchase: sale.createdAt
           };
         }
-        customerPurchases[sale.customer_onlineId].totalSpent += sale.grandTotal || 0;
-        customerPurchases[sale.customer_onlineId].totalOrders += 1;
-        if (new Date(sale.createdAt) > new Date(customerPurchases[sale.customer_onlineId].lastPurchase)) {
-          customerPurchases[sale.customer_onlineId].lastPurchase = sale.createdAt;
+        customerPurchases[sale.selectedStudentId].totalSpent += sale.grandTotal || 0;
+        customerPurchases[sale.selectedStudentId].totalOrders += 1;
+        if (new Date(sale.createdAt) > new Date(customerPurchases[sale.selectedStudentId].lastPurchase)) {
+          customerPurchases[sale.selectedStudentId].lastPurchase = sale.createdAt;
         }
       }
     });
@@ -247,7 +247,7 @@ export async function POST(req: NextRequest) {
           totalOrders,
           totalProducts,
           totalUsers,
-          totalCustomers,
+          totalStudents,
           avgOrderValue: totalOrders > 0 ? totalSales / totalOrders : 0,
           lowStockCount: lowStockProducts.length
         }
@@ -256,7 +256,7 @@ export async function POST(req: NextRequest) {
       topProducts,
       lowStockProducts,
       topCustomers,
-      recentSales: warehouse.sale.slice(0, 20)
+      recentSales: warehouse.consultation.slice(0, 20)
     });
   } catch (error) {
     console.error('Error fetching warehouse detailed analytics:', error);

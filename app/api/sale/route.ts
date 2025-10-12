@@ -15,28 +15,34 @@ export async function POST(req:NextRequest){
         amountPaid,
         balance,
         notes,
+        diagnosis,
+        symptoms,
+        treatment,
         cashier,
         warehouseId,
-        customer
+        customer: student
     } = await req.json()
 
    try {
-    const warehouse = await offlinePrisma.warehouses.findUnique({where:{warehouseCode:warehouseId,isDeleted:false}})
+    const clinic = await offlinePrisma.warehouses.findUnique({where:{warehouseCode:warehouseId,isDeleted:false}})
             
-    if(!warehouse) return NextResponse.json("werehous does not exisi",{status:401})
+    if(!clinic) return NextResponse.json("clinic does not exist",{status:401})
 
-    const sale = await offlinePrisma.sale.create({
+    const consultation = await offlinePrisma.sale.create({
         data:{
             invoiceNo,
             subTotal:subtotal,
             taxRate,
             notes,
+            diagnosis: diagnosis || 'General Consultation',
+            symptoms: symptoms || '',
+            treatment: treatment || '',
             amountPaid,
             grandTotal,
             paidAmount:grandTotal - balance,
             balance,
             warehousesId:warehouseId,
-            selectedCustomerId:customer.id
+            selectedCustomerId:student.id
         }
     })
 
@@ -49,30 +55,48 @@ export async function POST(req:NextRequest){
 
     
     for (let i = 0; i < items.length; i++) {
-        const savedSales = await offlinePrisma.saleItem.create({
+        const prescribedMedicine = await offlinePrisma.saleItem.create({
             data:{
-                saleId:sale.invoiceNo,
+                saleId:consultation.invoiceNo,
                 productName:items[i].productName,
                 productId:items[i].productId,
                 cost:items[i].costPrice,
                 selectedPrice:items[i].salePrice,
-                priceType:items[i].priceType ,
+                priceType:items[i].priceType,
                 quantity:items[i].quantity,
                 discount:items[i].discount,
                 total:items[i].total,
                 warehousesId:warehouseId,
                 profit:items[i].salePrice - items[i].costPrice,
+                dosage: items[i].dosage || 'As prescribed',
+                frequency: items[i].frequency || 'As needed'
             }
         })
-        //console.log(items[i].productId)
+        // Track drug dispensing for anti-theft monitoring
         await offlinePrisma.product.update({
             where:{id:items[i].productId,isDeleted:false},
-            data:{quantity:{
-                decrement:items[i].quantity,
-                
-            },
-            sync:false
-        }
+            data:{
+                quantity:{
+                    decrement:items[i].quantity
+                },
+                lastDispensed: new Date(),
+                sync:false
+            }
+        })
+        
+        // Create stock tracking record for anti-theft
+        await offlinePrisma.stockTracking.create({
+            data: {
+                productId: items[i].productId,
+                action: 'dispensed',
+                quantity: items[i].quantity,
+                previousStock: items[i].currentStock || 0,
+                newStock: (items[i].currentStock || 0) - items[i].quantity,
+                staffId: cashier?.id || null,
+                reason: `Dispensed for consultation ${consultation.invoiceNo}`,
+                patientId: student.id,
+                warehousesId: warehouseId
+            }
         })
     }
 
@@ -83,7 +107,7 @@ export async function POST(req:NextRequest){
                 amount:paymentMethods[j].amount,
                 // notes:paymentMethods[j].notes,
                 warehousesId:warehouseId,
-                saleId:sale.invoiceNo
+                saleId:consultation.invoiceNo
             }
         })
          

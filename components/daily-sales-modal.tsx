@@ -40,6 +40,8 @@ export function DailySalesModal({
     try {
       const response = await fetch(`${apiEndpoint}?warehouseId=${warehouseId}&date=${date}`)
       const data = await response.json()
+
+      console.log(data)
       
       if (response.ok) {
         setDailyData(data)
@@ -90,7 +92,7 @@ export function DailySalesModal({
             <div className="flex items-center gap-2">
               <Calendar className="h-5 w-5" />
               <DialogTitle>
-                Daily Sales Report - {date ? formatDate(date) : ''}
+                Daily Consulatation Report - {date ? formatDate(date) : ''}
               </DialogTitle>
             </div>
             <div className="flex items-center gap-2">
@@ -217,9 +219,7 @@ export function DailySalesModal({
                       <TableRow>
                         <TableHead>Product Name</TableHead>
                         <TableHead className="text-right">Quantity</TableHead>
-                        <TableHead className="text-right">Total Sales</TableHead>
-                        <TableHead className="text-right">Total Profit</TableHead>
-                        <TableHead className="text-right">Profit Margin</TableHead>
+                        
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -227,20 +227,8 @@ export function DailySalesModal({
                         <TableRow key={index}>
                           <TableCell className="font-medium">{product.productName}</TableCell>
                           <TableCell className="text-right">{product.quantity}</TableCell>
-                          <TableCell className="text-right text-green-600">
-                            {formatCurrency(product.totalSales)}
-                          </TableCell>
-                          <TableCell className="text-right text-blue-600">
-                            {formatCurrency(product.totalProfit)}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Badge variant={product.totalSales > 0 && (product.totalProfit / product.totalSales) > 0.2 ? "default" : "secondary"}>
-                              {product.totalSales > 0 
-                                ? `${((product.totalProfit / product.totalSales) * 100).toFixed(1)}%`
-                                : '0%'
-                              }
-                            </Badge>
-                          </TableCell>
+                          
+                          
                         </TableRow>
                       ))}
                     </TableBody>
@@ -267,10 +255,8 @@ export function DailySalesModal({
                       <TableRow>
                         <TableHead>Invoice No</TableHead>
                         <TableHead>Time</TableHead>
-                        <TableHead>Customer</TableHead>
-                        <TableHead className="text-right">Grand Total</TableHead>
-                        <TableHead className="text-right">Balance</TableHead>
-                        <TableHead>Payment Method</TableHead>
+                        <TableHead>Student</TableHead>
+                        
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -281,20 +267,10 @@ export function DailySalesModal({
                           <TableCell>
                             <div className="flex items-center gap-2">
                               <User className="h-4 w-4 text-gray-500" />
-                              {sale.selectedCustomer?.name || 'Walk-in Customer'}
+                              {sale.selectedStudent?.matricNumber || 'Walk-in Customer'}
                             </div>
                           </TableCell>
-                          <TableCell className="text-right text-green-600 font-medium">
-                            {formatCurrency(sale.grandTotal)}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Badge variant={sale.balance > 0 ? "destructive" : "default"}>
-                              {formatCurrency(sale.balance)}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            {sale.paymentMethod?.map((pm: any) => pm.method).join(', ') || 'Cash'}
-                          </TableCell>
+                          
                         </TableRow>
                       ))}
                     </TableBody>

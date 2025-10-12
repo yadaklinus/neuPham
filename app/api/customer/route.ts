@@ -4,14 +4,14 @@ import { markCustomerAsUnsynced } from "@/lib/sync-helpers";
 
 export async function GET(req: NextRequest) {
     try {
-        const customers = await offlinePrisma.customer.findMany({
+        const students = await offlinePrisma.customer.findMany({
             where: { isDeleted: false }
         });
         
        
-        return NextResponse.json(customers, { status: 200 });
+        return NextResponse.json(students, { status: 200 });
     } catch (error) {
-        console.error("Customer fetch error:", error);
+        console.error("Student fetch error:", error);
         return NextResponse.json(error, { status: 500 });
     } finally {
         await offlinePrisma.$disconnect();
@@ -21,39 +21,52 @@ export async function GET(req: NextRequest) {
 export async function POST(req:NextRequest){
     const {
         address,
-        company,
+        department,
         email,
         name,
         phone,
+        matricNumber,
+        level,
+        dateOfBirth,
+        emergencyContact,
+        bloodGroup,
+        allergies,
+        medicalHistory,
         userType,
-        wholesale,
         warehouseId
     } = await req.json()
 
     try {
-        const newCustomer = await offlinePrisma.customer.create({
+        const newStudent = await offlinePrisma.customer.create({
             data:{
                 name,
-                type:userType,
-                companyName:company,
+                type:userType || 'undergraduate',
+                matricNumber,
+                department,
+                level,
+                dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
+                emergencyContact,
+                bloodGroup,
+                allergies,
+                medicalHistory,
                 email,
                 address,
                 warehousesId:warehouseId,
                 phone:phone,
-                sync: false, // New customers should be marked as unsynced
+                sync: false, // New students should be marked as unsynced
                 syncedAt: null
             }
         })
 
         
-        //console.log(`New customer created: ${newCustomer.id} - marked as unsynced`);
+        //console.log(`New student created: ${newStudent.id} - marked as unsynced`);
         
         return NextResponse.json({
-            message: "Customer created successfully",
-            customer: newCustomer
+            message: "Student registered successfully",
+            student: newStudent
         }, {status:201})
     } catch (error) {
-        console.error("Customer creation error:", error);
+        console.error("Student registration error:", error);
         return NextResponse.json(error, {status:500})
     } finally {
         await offlinePrisma.$disconnect()
@@ -62,32 +75,46 @@ export async function POST(req:NextRequest){
 
 export async function PUT(req: NextRequest) {
     const {
-        customerId,
+        customerId: studentId,
         address,
-        company,
+        department,
         email,
         name,
         phone,
+        matricNumber,
+        level,
+        dateOfBirth,
+        emergencyContact,
+        bloodGroup,
+        allergies,
+        medicalHistory,
         userType
     } = await req.json();
 
     try {
-        // Check if customer exists
-        const existingCustomer = await offlinePrisma.customer.findUnique({
-            where: { id: customerId, isDeleted: false }
+        // Check if student exists
+        const existingStudent = await offlinePrisma.customer.findUnique({
+            where: { id: studentId, isDeleted: false }
         });
 
-        if (!existingCustomer) {
-            return NextResponse.json("Customer does not exist", { status: 404 });
+        if (!existingStudent) {
+            return NextResponse.json("Student does not exist", { status: 404 });
         }
 
-        // Update the customer
-        const updatedCustomer = await offlinePrisma.customer.update({
-            where: { id: customerId },
+        // Update the student
+        const updatedStudent = await offlinePrisma.customer.update({
+            where: { id: studentId },
             data: {
                 name,
                 type: userType,
-                companyName: company,
+                matricNumber,
+                department,
+                level,
+                dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
+                emergencyContact,
+                bloodGroup,
+                allergies,
+                medicalHistory,
                 email,
                 address,
                 phone,
@@ -97,14 +124,14 @@ export async function PUT(req: NextRequest) {
             }
         });
 
-        //console.log(`Customer updated: ${customerId} - marked as unsynced`);
+        //console.log(`Student updated: ${studentId} - marked as unsynced`);
 
         return NextResponse.json({
-            message: "Customer updated successfully",
-            customer: updatedCustomer
+            message: "Student updated successfully",
+            student: updatedStudent
         }, { status: 200 });
     } catch (error) {
-        console.error("Customer update error:", error);
+        console.error("Student update error:", error);
         return NextResponse.json(error, { status: 500 });
     } finally {
         await offlinePrisma.$disconnect();
@@ -112,19 +139,19 @@ export async function PUT(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-    const { customerId } = await req.json();
+    const { customerId: studentId } = await req.json();
 
     try {
-        const customer = await offlinePrisma.customer.findUnique({
-            where: { id: customerId }
+        const student = await offlinePrisma.customer.findUnique({
+            where: { id: studentId }
         });
 
-        if (!customer) {
-            return NextResponse.json("Customer does not exist", { status: 404 });
+        if (!student) {
+            return NextResponse.json("Student does not exist", { status: 404 });
         }
 
-        const deletedCustomer = await offlinePrisma.customer.update({
-            where: { id: customerId },
+        const deletedStudent = await offlinePrisma.customer.update({
+            where: { id: studentId },
             data: {
                 isDeleted: true,
                 sync: false, // Mark as unsynced to sync the deletion
@@ -133,14 +160,14 @@ export async function DELETE(req: NextRequest) {
             }
         });
 
-        //console.log(`Customer deleted: ${customerId} - marked as unsynced for deletion sync`);
+        //console.log(`Student deleted: ${studentId} - marked as unsynced for deletion sync`);
 
         return NextResponse.json({
-            message: "Customer deleted successfully",
-            customer: deletedCustomer
+            message: "Student deleted successfully",
+            student: deletedStudent
         }, { status: 200 });
     } catch (error) {
-        console.error("Customer deletion error:", error);
+        console.error("Student deletion error:", error);
         return NextResponse.json(error, { status: 500 });
     } finally {
         await offlinePrisma.$disconnect();

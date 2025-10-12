@@ -3,8 +3,8 @@ import offlinePrisma from "@/lib/oflinePrisma";
 
 export async function POST(req: NextRequest) {
     const {
-        items,
-        invoiceNo,
+        medicines,
+        consultationNo,
         subtotal,
         totalDiscount,
         taxRate,
@@ -16,114 +16,328 @@ export async function POST(req: NextRequest) {
         notes,
         diagnosis,
         symptoms,
-        consultantNotes,
-        cashier,
+        treatment,
+        vitalSigns,
+        followUpDate,
+        doctor,
         warehouseId,
         student
     } = await req.json()
 
     try {
-        const warehouse = await offlinePrisma.warehouses.findUnique({
+        const clinic = await offlinePrisma.warehouses.findUnique({
             where: { warehouseCode: warehouseId, isDeleted: false }
         })
-            
-        if (!warehouse) return NextResponse.json("Warehouse does not exist", { status: 401 })
 
-        const consultation = await offlinePrisma.consultation.create({
+        if (!clinic) return NextResponse.json("clinic does not exist", { status: 401 })
+
+        const consultation = await offlinePrisma.sale.create({
             data: {
-                invoiceNo,
+                invoiceNo: consultationNo,
                 subTotal: subtotal,
                 taxRate,
                 notes,
-                diagnosis,
-                symptoms,
-                consultantNotes,
+                diagnosis: diagnosis || 'General Consultation',
+                symptoms: symptoms || '',
+                treatment: treatment || '',
+                vitalSigns: vitalSigns ? JSON.stringify(vitalSigns) : null,
+                followUpDate: followUpDate ? new Date(followUpDate) : null,
                 amountPaid,
                 grandTotal,
                 paidAmount: grandTotal - balance,
                 balance,
                 warehousesId: warehouseId,
-                selectedStudentId: student.id
+                selectedCustomerId: student.id,
+                consultationType: 'regular' // regular, emergency, follow-up
             }
         })
 
-        for (let j = 0; j < items.length; j++) {
-            if (items[j].quantity < 0) {
-                return NextResponse.json("Invalid quantity", { status: 500 })
+        // Validate medicine quantities before dispensing
+        for (let j = 0; j < medicines.length; j++) {
+            if (medicines[j].quantity < 0) {
+                return NextResponse.json("Invalid medicine quantity", { status: 500 })
+            }
+            
+            const medicine = await offlinePrisma.product.findUnique({
+                where: { id: medicines[j].productId, isDeleted: false }
+            })
+            
+            if (!medicine) {
+                return NextResponse.json(`Medicine ${medicines[j].productName} not found`, { status: 404 })
+            }
+            
+            if (medicine.quantity < medicines[j].quantity) {
+                return NextResponse.json(`Insufficient stock for ${medicines[j].productName}. Available: ${medicine.quantity}`, { status: 400 })
             }
         }
 
-        for (let i = 0; i < items.length; i++) {
-            const savedConsultationItem = await offlinePrisma.consultationItem.create({
+        // Dispense medicines and create prescription records
+        for (let i = 0; i < medicines.length; i++) {
+            const prescription = await offlinePrisma.saleItem.create({
                 data: {
-                    consultationId: consultation.invoiceNo,
-                    productName: items[i].productName,
-                    productId: items[i].productId,
-                    cost: items[i].costPrice,
-                    selectedPrice: items[i].salePrice,
-                    priceType: items[i].priceType,
-                    quantity: items[i].quantity,
-                    dosage: items[i].dosage || "",
-                    frequency: items[i].frequency || "",
-                    duration: items[i].duration || "",
-                    instructions: items[i].instructions || "",
-                    discount: items[i].discount,
-                    total: items[i].total,
+                    saleId: consultation.invoiceNo,
+                    productName: medicines[i].productName,
+                    productId: medicines[i].productId,
+                    cost: medicines[i].costPrice,
+                    selectedPrice: medicines[i].salePrice,
+                    priceType: medicines[i].priceType,
+                    quantity: medicines[i].quantity,
+                    discount: medicines[i].discount,
+                    total: medicines[i].total,
                     warehousesId: warehouseId,
-                    studentId: student.id,
-                    profit: items[i].salePrice - items[i].costPrice,
+                    profit: medicines[i].salePrice - medicines[i].costPrice,
+                    dosage: medicines[i].dosage || 'As prescribed',
+                    frequency: medicines[i].frequency || 'As needed',
+                    duration: medicines[i].duration || 'Complete course',
+                    instructions: medicines[i].instructions || 'Take as directed'
                 }
             })
-            
-            // Update product quantity
+
+            // Update medicine stock with anti-theft tracking
+            const currentMedicine = await offlinePrisma.product.findUnique({
+                where: { id: medicines[i].productId }
+            })
+
             await offlinePrisma.product.update({
-                where: { id: items[i].productId, isDeleted: false },
+                where: { id: medicines[i].productId, isDeleted: false },
                 data: {
                     quantity: {
-                        decrement: items[i].quantity,
+                        decrement: medicines[i].quantity
+                    },
+                    lastDispensed: new Date(),
+                    totalDispensed: {
+                        increment: medicines[i].quantity
                     },
                     sync: false
                 }
             })
+
+            // Create comprehensive stock tracking record for anti-theft monitoring
+            await offlinePrisma.stockTracking.create({
+                data: {
+                    productId: medicines[i].productId,
+                    action: 'dispensed',
+                    quantity: medicines[i].quantity,
+                    previousStock: currentMedicine?.quantity || 0,
+                    newStock: (currentMedicine?.quantity || 0) - medicines[i].quantity,
+                    staffId: doctor?.id || null,
+                    reason: `Dispensed for consultation ${consultation.invoiceNo} - ${diagnosis}`,
+                    patientId: student.id,
+                    consultationId: consultation.id,
+                    warehousesId: warehouseId,
+                    dosage: medicines[i].dosage,
+                    frequency: medicines[i].frequency,
+                    duration: medicines[i].duration,
+                    timestamp: new Date()
+                }
+            })
+
+            // Check for suspicious dispensing patterns (anti-theft)
+            const recentDispensing = await offlinePrisma.stockTracking.findMany({
+                where: {
+                    productId: medicines[i].productId,
+                    staffId: doctor?.id,
+                    action: 'dispensed',
+                    timestamp: {
+                        gte: new Date(Date.now() - 24 * 60 * 60 * 1000) // Last 24 hours
+                    }
+                }
+            })
+
+            const totalDispensedToday = recentDispensing.reduce((sum, record) => sum + record.quantity, 0)
+
+            // Flag suspicious activity if excessive dispensing
+            if (totalDispensedToday > 50) {
+                await offlinePrisma.suspiciousActivity.create({
+                    data: {
+                        staffId: doctor?.id || null,
+                        productId: medicines[i].productId,
+                        activityType: 'excessive_dispensing',
+                        description: `Doctor dispensed ${totalDispensedToday} units of ${medicines[i].productName} in 24 hours`,
+                        severity: 'high',
+                        warehousesId: warehouseId,
+                        consultationId: consultation.id
+                    }
+                })
+            }
         }
 
-        // Create payment methods
+        // Record payment methods
         for (let j = 0; j < paymentMethods.length; j++) {
             await offlinePrisma.paymentMethod.create({
                 data: {
                     method: paymentMethods[j].method,
                     amount: paymentMethods[j].amount,
                     warehousesId: warehouseId,
-                    consultationId: consultation.invoiceNo
+                    saleId: consultation.invoiceNo,
+                    transactionRef: paymentMethods[j].transactionRef || null
                 }
             })
         }
 
-        return NextResponse.json("Consultation completed successfully", { status: 200 })
+        // Create consultation summary for medical records
+        await offlinePrisma.consultationSummary.create({
+            data: {
+                consultationId: consultation.id,
+                studentId: student.id,
+                doctorId: doctor?.id || null,
+                diagnosis,
+                symptoms,
+                treatment,
+                vitalSigns: vitalSigns ? JSON.stringify(vitalSigns) : null,
+                prescriptionCount: medicines.length,
+                followUpRequired: followUpDate ? true : false,
+                followUpDate: followUpDate ? new Date(followUpDate) : null,
+                consultationDate: new Date(),
+                warehousesId: warehouseId
+            }
+        })
+
+        return NextResponse.json({
+            success: true,
+            consultation,
+            message: "Consultation completed successfully"
+        })
     } catch (error) {
-        console.log(error)
-        return NextResponse.json(error, { status: 500 })
+        console.log("Consultation error:", error)
+        return NextResponse.json({ error: "Failed to process consultation" }, { status: 500 })
+    }
+}
+
+export async function GET(req: NextRequest) {
+    try {
+        const { searchParams } = new URL(req.url)
+        const warehouseId = searchParams.get('warehouseId')
+        const page = parseInt(searchParams.get('page') || '1')
+        const limit = parseInt(searchParams.get('limit') || '20')
+        const studentId = searchParams.get('studentId')
+        const doctorId = searchParams.get('doctorId')
+        const skip = (page - 1) * limit
+
+        const whereClause: any = {
+            isDeleted: false
+        }
+
+        if (warehouseId) {
+            whereClause.warehousesId = warehouseId
+        }
+
+        if (studentId) {
+            whereClause.selectedCustomerId = studentId
+        }
+
+        const [consultations, totalCount] = await Promise.all([
+            offlinePrisma.sale.findMany({
+                where: whereClause,
+                include: {
+                    customer: {
+                        select: {
+                            id: true,
+                            name: true,
+                            matricNumber: true,
+                            department: true,
+                            phone: true
+                        }
+                    },
+                    saleItems: {
+                        include: {
+                            product: {
+                                select: {
+                                    name: true,
+                                    unit: true
+                                }
+                            }
+                        }
+                    },
+                    paymentMethod: true
+                },
+                orderBy: { createdAt: 'desc' },
+                skip,
+                take: limit
+            }),
+            offlinePrisma.sale.count({
+                where: whereClause
+            })
+        ])
+
+        return NextResponse.json({
+            consultations: consultations.map(consultation => ({
+                id: consultation.id,
+                consultationNo: consultation.invoiceNo,
+                date: consultation.createdAt,
+                student: consultation.customer,
+                diagnosis: consultation.diagnosis,
+                symptoms: consultation.symptoms,
+                treatment: consultation.treatment,
+                medicines: consultation.saleItems,
+                totalAmount: consultation.grandTotal,
+                amountPaid: consultation.paidAmount,
+                balance: consultation.balance,
+                paymentStatus: consultation.balance === 0 ? 'paid' : consultation.balance === consultation.grandTotal ? 'unpaid' : 'partial',
+                followUpDate: consultation.followUpDate
+            })),
+            pagination: {
+                page,
+                limit,
+                totalCount,
+                totalPages: Math.ceil(totalCount / limit)
+            }
+        })
+    } catch (error) {
+        console.error("Failed to fetch consultations:", error)
+        return NextResponse.json({ error: "Failed to fetch consultations" }, { status: 500 })
     }
 }
 
 export async function DELETE(req: NextRequest) {
     const { consultationId } = await req.json()
     try {
-        const findConsultation = await offlinePrisma.consultation.findMany({
-            where: { invoiceNo: consultationId, isDeleted: false }
+        const consultation = await offlinePrisma.sale.findUnique({
+            where: { invoiceNo: consultationId, isDeleted: false },
+            include: {
+                saleItems: true
+            }
         })
         
-        if (!findConsultation) {
+        if (!consultation) {
             return NextResponse.json("Consultation not found", { status: 404 })
         }
 
-        await offlinePrisma.consultation.update({
+        // Restore medicine quantities before deleting consultation
+        for (const item of consultation.saleItems) {
+            await offlinePrisma.product.update({
+                where: { id: item.productId },
+                data: {
+                    quantity: {
+                        increment: item.quantity
+                    },
+                    sync: false
+                }
+            })
+
+            // Create stock tracking record for reversal
+            await offlinePrisma.stockTracking.create({
+                data: {
+                    productId: item.productId,
+                    action: 'returned',
+                    quantity: item.quantity,
+                    staffId: null,
+                    reason: `Consultation ${consultationId} cancelled - stock restored`,
+                    warehousesId: consultation.warehousesId,
+                    timestamp: new Date()
+                }
+            })
+        }
+
+        await offlinePrisma.sale.update({
             where: { invoiceNo: consultationId },
             data: { isDeleted: true, sync: false }
         })
-        
-        return NextResponse.json("Consultation deleted successfully", { status: 200 })
+
+        return NextResponse.json({ message: "Consultation cancelled successfully" }, { status: 200 })
+
     } catch (error) {
-        return NextResponse.json(error, { status: 500 })
+        console.error("Failed to cancel consultation:", error)
+        return NextResponse.json({ error: "Failed to cancel consultation" }, { status: 500 })
     }
 }

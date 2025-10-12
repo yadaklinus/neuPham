@@ -49,6 +49,7 @@ import { useSession } from "next-auth/react"
 import { formatCurrency } from "@/lib/utils"
 import { SalesCalendar } from "@/components/sales-calendar"
 import { DailySalesModal } from "@/components/daily-sales-modal"
+import { ClinicExportDialog } from "@/components/clinic-export-dialog"
 
 interface DashboardData {
   warehouse: {
@@ -579,10 +580,10 @@ export default function DashboardPage() {
                 <Settings className="h-5 w-5" />
                 Quick Actions
               </CardTitle>
-              <CardDescription>Common tasks and shortcuts</CardDescription>
+              <CardDescription>Common tasks and shortcuts for clinic management</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
                 <Link href={`${endPoint}/sales/add`}>
                   <Button className="h-20 flex-col gap-2 bg-transparent w-full" variant="outline">
                     <Stethoscope className="h-6 w-6" />
@@ -598,7 +599,7 @@ export default function DashboardPage() {
                 <Link href={`${endPoint}/people/customers/add`}>
                   <Button className="h-20 flex-col gap-2 bg-transparent w-full" variant="outline">
                     <Users className="h-6 w-6" />
-                    <span>Add Student</span>
+                    <span>Register Student</span>
                   </Button>
                 </Link>
                 <Link href={`${endPoint}/sales/list`}>
@@ -607,6 +608,15 @@ export default function DashboardPage() {
                     <span>View Consultations</span>
                   </Button>
                 </Link>
+                <ClinicExportDialog 
+                  warehouseId={warehouseId}
+                  trigger={
+                    <Button className="h-20 flex-col gap-2 bg-transparent w-full" variant="outline">
+                      <Heart className="h-6 w-6" />
+                      <span>Export Reports</span>
+                    </Button>
+                  }
+                />
               </div>
             </CardContent>
           </Card>

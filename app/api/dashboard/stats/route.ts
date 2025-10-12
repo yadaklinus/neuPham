@@ -16,17 +16,17 @@ export async function GET() {
       onlinePrisma.users_online.count({where:{isDeleted:false}}),
       onlinePrisma.warehouses_online.count({where:{isDeleted:false}}),
       onlinePrisma.product_online.count({where:{isDeleted:false}}),
-      onlinePrisma.sale_online.count({where:{isDeleted:false}}),
-      onlinePrisma.customer_online.count({where:{isDeleted:false}}),
-      onlinePrisma.sale_online.findMany({
+      onlinePrisma.consultation_online.count({where:{isDeleted:false}}),
+      onlinePrisma.student_online.count({where:{isDeleted:false}}),
+      onlinePrisma.consultation_online.findMany({
         where:{isDeleted:false},
         take: 5,
         orderBy: { createdAt: 'desc' },
         include: {
-          Customer_online:true,
-          saleItems: {
+          selectedStudent:true,
+          consultationItems: {
             include: {
-              Product_online: true
+              product: true
             }
           }
         }
@@ -34,7 +34,7 @@ export async function GET() {
     ])
 
     // Calculate total sales amount
-    const totalSalesAmount = await onlinePrisma.sale_online.aggregate({
+    const totalSalesAmount = await onlinePrisma.consultation_online.aggregate({
       where:{isDeleted:false},
       _sum: {
         grandTotal: true
@@ -53,11 +53,11 @@ export async function GET() {
       totalRevenue,
       recentSales: recentSales.map((sale:any) => ({
         id: sale.invoiceNo,
-        customer: sale.Customer_online,
-        amount: sale.grandTotal,
+        customer: sale?.Customer_online,
+        amount: sale?.grandTotal,
         date: sale.createdAt.toISOString(),
-        items: sale.saleItems.length,
-        products: sale.saleItems.map((item:any) => item.productName).join(', ')
+        items: sale?.saleItems?.length,
+        products: sale?.saleItems?.map((item:any) => item.productName).join(', ')
       }))
     })
   } catch (error) {

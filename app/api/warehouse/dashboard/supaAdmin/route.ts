@@ -43,12 +43,12 @@ export async function POST(req:NextRequest) {
         where: { warehouses_onlineId: warehouseId,isDeleted:false }
       }),
       
-      // Total sales for this warehouse
+      // Total consultations for this clinic
       await prisma.sale_online.count({
         where: { warehouses_onlineId: warehouseId,isDeleted:false }
       }),
       
-      // Total customers for this warehouse
+      // Total students for this clinic
       await prisma.customer_online.count({
         where: { warehouses_onlineId: warehouseId,isDeleted:false }
       }),
@@ -58,7 +58,7 @@ export async function POST(req:NextRequest) {
         where: { warehouses_onlineId: warehouseId,isDeleted:false }
       }),
       
-      // Recent sales for this warehouse
+      // Recent consultations for this clinic
       await prisma.sale_online.findMany({
         where: { warehouses_onlineId: warehouseId,isDeleted:false },
         take: 5,
@@ -74,7 +74,7 @@ export async function POST(req:NextRequest) {
         }
       }),
       
-      // Low stock products (quantity <= 5)
+      // Low stock medicines (quantity <= 5) - Anti-theft tracking
       await prisma.product_online.findMany({
         where: { 
           warehouses_onlineId: warehouseId,
@@ -85,7 +85,7 @@ export async function POST(req:NextRequest) {
         orderBy: { quantity: 'asc' }
       }),
       
-      // Top selling products by quantity
+      // Most prescribed medicines by quantity
       await prisma.saleItem_online.groupBy({
         by: ['product_onlineId', 'productName'],
         where: { warehouses_onlineId: warehouseId,isDeleted:false },
@@ -101,11 +101,11 @@ export async function POST(req:NextRequest) {
         take: 5
       }),
       
-      // Sales by month for the last 6 months
+      // Consultations by month for the last 6 months
       await prisma.$queryRaw`
         SELECT 
           TO_CHAR(DATE_TRUNC('month', "createdAt"), 'Mon') as month,
-          COUNT(*)::int as sales,
+          COUNT(*)::int as consultations,
           SUM("grandTotal")::float as revenue
         FROM "Sale_online" 
         WHERE "warehouses_onlineId" = ${warehouseId} AND "isDeleted" = ${false}
@@ -128,7 +128,7 @@ export async function POST(req:NextRequest) {
 
     ];
 
-    // Calculate total revenue for this warehouse
+    // Calculate total revenue for this clinic
     const totalRevenue = await prisma.sale_online.aggregate({
       where: { warehouses_onlineId: warehouseId,isDeleted:false },
       _sum: {
@@ -136,7 +136,7 @@ export async function POST(req:NextRequest) {
       }
     });
 
-    // Get user roles distribution for this warehouse
+    // Get staff roles distribution for this clinic
     const userRoles = await prisma.users_online.groupBy({
       by: ['role'],
       where: { warehouses_onlineId: warehouseId,isDeleted:false },
@@ -145,7 +145,7 @@ export async function POST(req:NextRequest) {
       }
     });
 
-    // Get customer types distribution for this warehouse
+    // Get student types distribution for this clinic
     const customerTypes = await prisma.customer_online.groupBy({
       by: ['type'],
       where: { warehouses_onlineId: warehouseId,isDeleted:false },
@@ -154,8 +154,8 @@ export async function POST(req:NextRequest) {
       }
     });
 
-    // Calculate average sale value
-    const avgSaleValue = totalSales > 0 ? (totalRevenue._sum.grandTotal || 0) / totalSales : 0;
+    // Calculate average consultation value
+    const avgConsultationValue = totalSales > 0 ? (totalRevenue._sum.grandTotal || 0) / totalSales : 0;
 
     return NextResponse.json({
       warehouse: {
@@ -169,16 +169,18 @@ export async function POST(req:NextRequest) {
       metrics: {
         totalUsers,
         totalProducts,
-        totalSales,
-        totalCustomers,
+        totalConsultations: totalSales,
+        totalStudents: totalCustomers,
         totalSuppliers,
         totalRevenue: totalRevenue._sum.grandTotal || 0,
-        avgSaleValue
+        avgConsultationValue
       },
-      recentSales: recentSales.map((sale: any) => ({
+      recentConsultations: recentSales.map((sale: any) => ({
         id: sale.id,
         invoiceNo: sale.invoiceNo,
-        customerName: sale.selectedCustomer?.name || 'Walk-in Customer',
+        studentName: sale.Customer_online?.name || 'Walk-in Patient',
+        studentMatric: sale.Customer_online?.matricNumber || 'N/A',
+        diagnosis: sale.diagnosis || 'General Consultation',
         grandTotal: sale.grandTotal,
         createdAt: sale.createdAt,
         paymentMethod: sale.paymentMethod?.[0]?.method || 'cash',
@@ -189,24 +191,29 @@ export async function POST(req:NextRequest) {
         name: product.name,
         barcode: product.barcode,
         quantity: product.quantity,
-        unit: product.unit
+        unit: product.unit,
+        stockAlert: product.quantity <= 5 ? 'critical' : 'low'
       })),
-      topProducts: topProducts.map((product: any) => ({
-        productId: product.productId,
+      topMedicines: topProducts.map((product: any) => ({
+        productId: product.product_onlineId,
         name: product.productName,
-        sales: product._sum.quantity,
+        prescriptions: product._sum.quantity,
         revenue: product._sum.total
       })),
-      salesByMonth: salesByMonth || [],
+      consultationsByMonth: (salesByMonth || []).map((item: any) => ({
+        month: item.month,
+        consultations: item.consultations || item.sales,
+        revenue: item.revenue
+      })),
       userRoles: userRoles.map((role: any) => ({
         name: role.role,
         value: role._count.role,
-        color: role.role === 'admin' ? '#10b981' : role.role === 'sales' ? '#3b82f6' : '#f59e0b'
+        color: role.role === 'admin' ? '#10b981' : role.role === 'doctor' ? '#3b82f6' : role.role === 'nurse' ? '#f59e0b' : '#8b5cf6'
       })),
-      customerTypes: customerTypes.map((type: any) => ({
-        name: type.type,
+      studentDepartments: customerTypes.map((type: any) => ({
+        name: type.type || 'General',
         value: type._count.type,
-        color: type.type === 'retal' ? '#3b82f6' : '#10b981'
+        color: type.type === 'undergraduate' ? '#3b82f6' : type.type === 'postgraduate' ? '#10b981' : '#f59e0b'
       }))
     });
   } catch (error) {

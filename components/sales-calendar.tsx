@@ -136,14 +136,14 @@ export function SalesCalendar({ warehouseId, onDateClick, apiEndpoint, className
           </div>
           {dayData && isCurrentMonth && (
             <div className="space-y-1">
-              <div className="text-xs text-green-600 font-medium">
+              {/* <div className="text-xs text-green-600 font-medium">
                 {formatCurrency(dayData.totalSales)}
               </div>
               <div className="text-xs text-blue-600">
                 P: {formatCurrency(dayData.totalProfit)}
-              </div>
+              </div> */}
               <div className="text-xs text-gray-500">
-                {dayData.transactionCount} sales
+                {dayData.transactionCount} Consultation
               </div>
             </div>
           )}
@@ -162,7 +162,7 @@ export function SalesCalendar({ warehouseId, onDateClick, apiEndpoint, className
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5" />
-            Daily Sales Calendar
+            Daily Consultation Calendar
           </CardTitle>
           <div className="flex items-center gap-2">
             <Button
@@ -189,7 +189,7 @@ export function SalesCalendar({ warehouseId, onDateClick, apiEndpoint, className
           </div>
         </div>
         
-        {monthlyData && (
+        {/* {monthlyData && (
           <div className="grid grid-cols-3 gap-4 mt-4">
             <div className="text-center">
               <div className="flex items-center justify-center gap-1 text-sm text-gray-600">
@@ -219,7 +219,7 @@ export function SalesCalendar({ warehouseId, onDateClick, apiEndpoint, className
               </div>
             </div>
           </div>
-        )}
+        )} */}
       </CardHeader>
       
       <CardContent>

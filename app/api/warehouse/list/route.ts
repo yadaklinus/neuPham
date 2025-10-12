@@ -18,9 +18,10 @@ export async function POST(
       include: {
         users: true,
         products: true,
-        sale: {
+        student:true,
+        consultation: {
           include: {
-            saleItems: true
+            consultationItems: true
           }
         }
       }
@@ -35,9 +36,10 @@ export async function POST(
         include: {
           users: true,
           products: true,
-          sale: {
+          student:true,
+          consultation: {
             include: {
-              saleItems: true
+              consultationItems: true
             }
           }
         }
@@ -53,8 +55,9 @@ export async function POST(
 
     // Calculate additional statistics
     const totalProducts = warehouse.products.length;
-    const totalSales = warehouse.sale.reduce((sum, sale) => sum + (sale.grandTotal || 0), 0);
-    const totalOrders = warehouse.sale.length;
+    const totalStudents = warehouse.student.length;
+    const totalSales = warehouse.consultation.reduce((sum, sale) => sum + (sale.grandTotal || 0), 0);
+    const totalOrders = warehouse.consultation.length;
     const assignedUsers = warehouse.users.length;
 
     const response = {
@@ -63,6 +66,7 @@ export async function POST(
         totalProducts,
         totalSales,
         totalOrders,
+        totalStudents,
         assignedUsers
       }
     };

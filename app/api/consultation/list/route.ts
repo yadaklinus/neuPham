@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import offlinePrisma from "@/lib/oflinePrisma";
 
-export async function GET(req: NextRequest) {
+export async function POST(req: NextRequest) {
     try {
         const {
             warehouseId
@@ -38,6 +38,7 @@ export async function GET(req: NextRequest) {
             },
             orderBy: { createdAt: 'desc' }
         });
+        
         
         return NextResponse.json(consultations, { status: 200 });
     } catch (error) {

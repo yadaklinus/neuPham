@@ -42,7 +42,7 @@ export function RecentSalesTable({ sales }: RecentSalesTableProps) {
               {sales.map((sale) => (
                 <TableRow key={sale.id}>
                   <TableCell className="font-medium">{sale.id}</TableCell>
-                  <TableCell>{sale.customer.name}</TableCell>
+                  <TableCell>{sale?.customer?.name}</TableCell>
                   <TableCell className="max-w-[200px] truncate" title={sale.products}>
                     {sale.products || 'No products'}
                   </TableCell>

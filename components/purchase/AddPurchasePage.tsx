@@ -34,12 +34,6 @@ import { usePrintPurchase } from "@/hooks/use-print-purchase"
 // Sample data
 
 
-const warehouses = [
-  { id: "WH-001", name: "Main Warehouse", code: "MAIN", address: "100 Storage St, Warehouse District" },
-  { id: "WH-002", name: "Branch Warehouse", code: "BRANCH", address: "200 Branch Ave, Secondary Location" },
-  { id: "WH-003", name: "Storage Facility", code: "STORAGE", address: "300 Storage Rd, Remote Area" },
-]
-
 
 
 interface PurchaseItem {

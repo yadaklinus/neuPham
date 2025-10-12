@@ -66,7 +66,7 @@ export default function WarehousesListPage() {
   const {data:warehousesData,loading,error} = fetchData("/api/warehouse")
 
   if (loading) return <Loading/>
-if (error) return <h1 className="text-red-500">Error loading warehouses.</h1>
+if (error) return <h1 className="text-red-500">Error loading clinics.</h1>
 if (!warehousesData) return <h1>No data available.</h1>
 
     
@@ -101,7 +101,7 @@ const filteredWarehouses = warehousesData?.filter((warehouse: any) => {
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
-                  <BreadcrumbPage>View Warehouses</BreadcrumbPage>
+                  <BreadcrumbPage>View Clinics</BreadcrumbPage>
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
@@ -112,12 +112,12 @@ const filteredWarehouses = warehousesData?.filter((warehouse: any) => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Warehouse className="h-5 w-5 text-blue-600" />
-              <h1 className="text-2xl font-semibold text-blue-600">Warehouses</h1>
+              <h1 className="text-2xl font-semibold text-blue-600">Clinics</h1>
             </div>
             <Button asChild>
               <a href="/warehouses/add">
                 <Plus className="mr-2 h-4 w-4" />
-                Add Warehouse
+                Add Clinic
               </a>
             </Button>
           </div>
@@ -126,7 +126,7 @@ const filteredWarehouses = warehousesData?.filter((warehouse: any) => {
           <div className="grid gap-4 md:grid-cols-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Warehouses</CardTitle>
+                <CardTitle className="text-sm font-medium">Total Clinics</CardTitle>
                 <Warehouse className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -206,16 +206,16 @@ const filteredWarehouses = warehousesData?.filter((warehouse: any) => {
           {/* Warehouses Table */}
           <Card>
             <CardHeader>
-              <CardTitle>Warehouses List</CardTitle>
+              <CardTitle>Clinics List</CardTitle>
               <CardDescription>
-                Showing {filteredWarehouses.length} of {warehousesData.length} warehouses
+                Showing {filteredWarehouses.length} of {warehousesData.length} clinics
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Warehouse</TableHead>
+                    <TableHead>Clinic Name</TableHead>
                     <TableHead>Code</TableHead>
                     
                     <TableHead>Location</TableHead>
@@ -273,7 +273,7 @@ const filteredWarehouses = warehousesData?.filter((warehouse: any) => {
                             <DropdownMenuItem>
                               <Link  href={`/sup-admin/warehouses/${warehouse?.warehouseCode}/edit`} >
                               <Edit className="mr-2 h-4 w-4" />
-                              Edit Warehouse
+                              Edit Clinic
                               </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem>

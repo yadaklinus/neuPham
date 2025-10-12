@@ -152,7 +152,7 @@ async function syncUpstreamEntities(connectivity: { online: boolean; offline: bo
     console.log("Skipping upstream sync - online database not available");
     
     // Mark upstream entities as skipped
-    const upstreamEntities = ['products', 'customers', 'suppliers', 'sales', 'purchases', 'saleItems', 'purchaseItems', 'paymentMethods', 'balancePayment'];
+    const upstreamEntities = ['products', 'student', 'suppliers', 'consultation', 'purchases', 'consultationItems', 'purchaseItems', 'paymentMethods', 'balancePayment'];
     upstreamEntities.forEach(entity => {
       updateProgress(entity, 0, 0, 'skipped', 'Online database not available');
       currentSyncStatus?.warnings.push(`${entity} sync skipped - online database not available`);
@@ -162,7 +162,7 @@ async function syncUpstreamEntities(connectivity: { online: boolean; offline: bo
 
   if (!connectivity.offline) {
     console.log("Cannot perform upstream sync - offline database not available");
-    const upstreamEntities = ['products', 'customers', 'suppliers', 'sales', 'purchases', 'saleItems', 'purchaseItems', 'paymentMethods', 'balancePayment'];
+    const upstreamEntities = ['products', 'student', 'suppliers', 'consultation', 'purchases', 'consultationItems', 'purchaseItems', 'paymentMethods', 'balancePayment'];
     upstreamEntities.forEach(entity => {
       updateProgress(entity, 0, 0, 'skipped', 'Offline database not available');
       currentSyncStatus?.warnings.push(`${entity} sync skipped - offline database not available`);
@@ -221,29 +221,29 @@ async function syncUpstreamEntities(connectivity: { online: boolean; offline: bo
     currentSyncStatus?.errors.push(`Products sync failed: ${errorMessage}`);
   }
 
-  // Add other upstream entities (customers, suppliers, sales, etc.) following the same pattern...
-  // For brevity, I'll show just the customers example:
+  // Add other upstream entities (student, suppliers, consultation, etc.) following the same pattern...
+  // For brevity, I'll show just the student example:
 
-  // 4. Customers (Up sync - offline to online)
-  updateProgress('customers', 0, 0, 'syncing');
+  // 4. student (Up sync - offline to online)
+  updateProgress('student', 0, 0, 'syncing');
   try {
-    console.log("Starting customers sync...");
-    const customers = await offlinePrisma.customer.findMany({ where: { sync: false } });
-    updateProgress('customers', 0, customers.length, 'syncing');
+    console.log("Starting student sync...");
+    const student = await offlinePrisma.student.findMany({ where: { sync: false } });
+    updateProgress('student', 0, student.length, 'syncing');
     
-    if (customers.length > 0) {
+    if (student.length > 0) {
       let customerErrors = 0;
       const successfulIds: string[] = [];
       
-      await pMap(customers, async (data, index) => {
-        const { warehousesId: warehouses_onlineId, ...rest } = data;
+      await pMap(student, async (data, index) => {
+        const { warehousesId, ...rest } = data;
         const result = await safeUpsert(
-          () => onlinePrisma.customer_online.upsert({
+          () => onlinePrisma.student_online.upsert({
             where: { id: data.id },
-            update: { ...rest, warehouses_onlineId, syncedAt: new Date(), sync: true },
-            create: { ...rest, warehouses_onlineId, syncedAt: new Date(), sync: true },
+            update: { ...rest, warehousesId, syncedAt: new Date(), sync: true },
+            create: { ...rest, warehousesId, syncedAt: new Date(), sync: true },
           }),
-          'customers',
+          'student',
           data.id
         );
         
@@ -254,24 +254,24 @@ async function syncUpstreamEntities(connectivity: { online: boolean; offline: bo
           currentSyncStatus?.errors.push(`Customer ${data.id}: ${result.error}`);
         }
         
-        updateProgress('customers', index + 1, customers.length, 'syncing');
+        updateProgress('student', index + 1, student.length, 'syncing');
       }, { concurrency: 2 });
       
       if (successfulIds.length > 0) {
-        await offlinePrisma.customer.updateMany({
+        await offlinePrisma.student.updateMany({
           where: { id: { in: successfulIds } },
           data: { sync: true }
         });
       }
       
-      console.log(`Synced ${successfulIds.length} customers (${customerErrors} errors)`);
+      console.log(`Synced ${successfulIds.length} student (${customerErrors} errors)`);
     }
     
-    updateProgress('customers', customers.length, customers.length, 'completed');
+    updateProgress('student', student.length, student.length, 'completed');
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    updateProgress('customers', 0, 0, 'error', errorMessage);
-    currentSyncStatus?.errors.push(`Customers sync failed: ${errorMessage}`);
+    updateProgress('student', 0, 0, 'error', errorMessage);
+    currentSyncStatus?.errors.push(`student sync failed: ${errorMessage}`);
   }
 
   updateProgress('suppliers', 0, 0, 'syncing');
@@ -323,54 +323,54 @@ async function syncUpstreamEntities(connectivity: { online: boolean; offline: bo
     currentSyncStatus?.errors.push(`Suppliers sync failed: ${errorMessage}`);
   }
   
-  //Sales
-  updateProgress('sales', 0, 0, 'syncing');
+  //consultation
+  updateProgress('consultation', 0, 0, 'syncing');
   try {
-    console.log("Starting sales sync...");
-    const sales = await offlinePrisma.sale.findMany({ where: { sync: false } });
-    updateProgress('sales', 0, sales.length, 'syncing');
+    console.log("Starting consultation sync...");
+    const consultation = await offlinePrisma.consultation.findMany({ where: { sync: false } });
+    updateProgress('consultation', 0, consultation.length, 'syncing');
   
-    if (sales.length > 0) {
-      let salesErrors = 0;
+    if (consultation.length > 0) {
+      let consultationErrors = 0;
       const successfulInvoiceNos: string[] = [];
   
-      await pMap(sales, async (data, index) => {
-        const { warehousesId: warehouses_onlineId, selectedCustomerId: customer_onlineId, ...rest } = data;
+      await pMap(consultation, async (data, index) => {
+        const { warehousesId: warehousesId, ...rest } = data;
         const result = await safeUpsert(
-          () => onlinePrisma.sale_online.upsert({
+          () => onlinePrisma.consultation_online.upsert({
             where: { invoiceNo: data.invoiceNo },
-            update: { ...rest, warehouses_onlineId, customer_onlineId, syncedAt: new Date(), sync: true },
-            create: { ...rest, warehouses_onlineId, customer_onlineId, syncedAt: new Date(), sync: true },
+            update: { ...rest, warehousesId, syncedAt: new Date(), sync: true },
+            create: { ...rest, warehousesId, syncedAt: new Date(), sync: true },
           }),
-          'sales',
+          'consultation',
           data.invoiceNo
         );
   
         if (result.success) {
           successfulInvoiceNos.push(data.invoiceNo);
         } else {
-          salesErrors++;
+          consultationErrors++;
           currentSyncStatus?.errors.push(`Sale ${data.invoiceNo}: ${result.error}`);
         }
   
-        updateProgress('sales', index + 1, sales.length, 'syncing');
+        updateProgress('consultation', index + 1, consultation.length, 'syncing');
       }, { concurrency: 2 });
   
       if (successfulInvoiceNos.length > 0) {
-        await offlinePrisma.sale.updateMany({
+        await offlinePrisma.consultation.updateMany({
           where: { invoiceNo: { in: successfulInvoiceNos } },
           data: { sync: true }
         });
       }
   
-      console.log(`Synced ${successfulInvoiceNos.length} sales (${salesErrors} errors)`);
+      console.log(`Synced ${successfulInvoiceNos.length} consultation (${consultationErrors} errors)`);
     }
   
-    updateProgress('sales', sales.length, sales.length, 'completed');
+    updateProgress('consultation', consultation.length, consultation.length, 'completed');
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    updateProgress('sales', 0, 0, 'error', errorMessage);
-    currentSyncStatus?.errors.push(`Sales sync failed: ${errorMessage}`);
+    updateProgress('consultation', 0, 0, 'error', errorMessage);
+    currentSyncStatus?.errors.push(`consultation sync failed: ${errorMessage}`);
   }
   
   //Purchase
@@ -423,33 +423,33 @@ async function syncUpstreamEntities(connectivity: { online: boolean; offline: bo
     currentSyncStatus?.errors.push(`Purchases sync failed: ${errorMessage}`);
   }
   
-  // SaleItems
-  updateProgress('saleItems', 0, 0, 'syncing');
+  // consultationItems
+  updateProgress('consultationItems', 0, 0, 'syncing');
   try {
     console.log("Starting sale items sync...");
-    const saleItems = await offlinePrisma.saleItem.findMany({ where: { sync: false } });
-    updateProgress('saleItems', 0, saleItems.length, 'syncing');
+    const consultationItems = await offlinePrisma.consultationItem.findMany({ where: { sync: false } });
+    updateProgress('consultationItems', 0, consultationItems.length, 'syncing');
   
-    if (saleItems.length > 0) {
+    if (consultationItems.length > 0) {
       let saleItemErrors = 0;
       const successfulIds: string[] = [];
   
-      await pMap(saleItems, async (data, index) => {
+      await pMap(consultationItems, async (data, index) => {
         const { 
           warehousesId: warehouses_onlineId, 
-          saleId: sale_onlineId, 
-          customerId: customer_onlineId, 
-          productId: product_onlineId, 
+          consultationId: consultationId, 
+          studentId: studentId, 
+          productId: productId, 
           ...rest 
         } = data;
   
         const result = await safeUpsert(
-          () => onlinePrisma.saleItem_online.upsert({
+          () => onlinePrisma.consultationItem_online.upsert({
             where: { id: data.id },
-            update: { ...rest, warehouses_onlineId, sale_onlineId, product_onlineId, customer_onlineId, syncedAt: new Date(), sync: true },
-            create: { ...rest, warehouses_onlineId, sale_onlineId, product_onlineId, customer_onlineId, syncedAt: new Date(), sync: true },
+            update: { ...rest, syncedAt: new Date(), sync: true },
+            create: { ...rest, syncedAt: new Date(), sync: true },
           }),
-          'saleItems',
+          'consultationItems',
           data.id
         );
   
@@ -460,11 +460,11 @@ async function syncUpstreamEntities(connectivity: { online: boolean; offline: bo
           currentSyncStatus?.errors.push(`Sale Item ${data.id}: ${result.error}`);
         }
   
-        updateProgress('saleItems', index + 1, saleItems.length, 'syncing');
+        updateProgress('consultationItems', index + 1, consultationItems.length, 'syncing');
       }, { concurrency: 2 });
   
       if (successfulIds.length > 0) {
-        await offlinePrisma.saleItem.updateMany({
+        await offlinePrisma.consultationItem.updateMany({
           where: { id: { in: successfulIds } },
           data: { sync: true }
         });
@@ -473,10 +473,10 @@ async function syncUpstreamEntities(connectivity: { online: boolean; offline: bo
       console.log(`Synced ${successfulIds.length} sale items (${saleItemErrors} errors)`);
     }
   
-    updateProgress('saleItems', saleItems.length, saleItems.length, 'completed');
+    updateProgress('consultationItems', consultationItems.length, consultationItems.length, 'completed');
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    updateProgress('saleItems', 0, 0, 'error', errorMessage);
+    updateProgress('consultationItems', 0, 0, 'error', errorMessage);
     currentSyncStatus?.errors.push(`Sale Items sync failed: ${errorMessage}`);
   }
   
@@ -551,15 +551,15 @@ async function syncUpstreamEntities(connectivity: { online: boolean; offline: bo
       await pMap(paymentMethods, async (data, index) => {
         const { 
           warehousesId: warehouses_onlineId, 
-          saleId: sale_onlineId, 
+          consultationId: consultation_onlineId, 
           ...rest 
         } = data;
   
         const result = await safeUpsert(
           () => onlinePrisma.paymentMethod_online.upsert({
             where: { id: data.id },
-            update: { ...rest, warehouses_onlineId, sale_onlineId, syncedAt: new Date(), sync: true },
-            create: { ...rest, warehouses_onlineId, sale_onlineId, syncedAt: new Date(), sync: true },
+            update: { ...rest, warehouses_onlineId, consultation_onlineId, syncedAt: new Date(), sync: true },
+            create: { ...rest, warehouses_onlineId, consultation_onlineId, syncedAt: new Date(), sync: true },
           }),
           'paymentMethods',
           data.id
@@ -609,8 +609,8 @@ export async function POST(req: NextRequest) {
 
   // Initialize sync status
   const syncEntities = [
-    'products', 'customers', 'suppliers',
-    'sales', 'purchases', 'saleItems', 'purchaseItems', 'paymentMethods', 'balancePayment'
+    'products', 'student', 'suppliers',
+    'consultation', 'purchases', 'consultationItems', 'purchaseItems', 'paymentMethods', 'balancePayment'
   ];
 
   isSyncing = true;
