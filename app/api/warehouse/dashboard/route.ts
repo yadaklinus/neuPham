@@ -3,6 +3,14 @@ import { NextRequest, NextResponse } from "next/server";
 
 const prisma = new PrismaClient()
 
+function safeJson(data: any) {
+  return JSON.parse(
+    JSON.stringify(data, (_, value) =>
+      typeof value === "bigint" ? value.toString() : value
+    )
+  );
+}
+
 export async function POST(req:NextRequest) {
   try {
     const { warehouseId } = await req.json()
@@ -147,60 +155,64 @@ export async function POST(req:NextRequest) {
     // Calculate average consultation value
     const avgConsultationValue = totalConsultations > 0 ? (totalRevenue._sum.grandTotal || 0) / totalConsultations : 0;
 
-    return NextResponse.json({
-      warehouse: {
-        id: warehouse.id,
-        name: warehouse.name,
-        code: warehouse.warehouseCode,
-        address: warehouse.address,
-        email: warehouse.email,
-        phone: warehouse.phoneNumber
-      },
-      metrics: {
-        totalUsers,
-        totalProducts,
-        totalConsultations,
-        totalStudents,
-        totalSuppliers,
-        totalRevenue: totalRevenue._sum.grandTotal || 0,
-        avgConsultationValue
-      },
-      recentConsultations: recentConsultations.map((consultation: any) => ({
-        id: consultation.id,
-        invoiceNo: consultation.invoiceNo,
-        studentName: consultation.selectedStudent?.name || 'Walk-in Student',
-        studentMatric: consultation.selectedStudent?.matricNumber || 'N/A',
-        diagnosis: consultation.diagnosis || 'General consultation',
-        grandTotal: consultation.grandTotal,
-        createdAt: consultation.createdAt,
-        paymentMethod: consultation.paymentMethod?.[0]?.method || 'cash',
-        itemsCount: consultation.consultationItems.length
-      })),
-      lowStockProducts: lowStockProducts.map((product: any) => ({
-        id: product.id,
-        name: product.name,
-        barcode: product.barcode,
-        quantity: product.quantity,
-        unit: product.unit
-      })),
-      topMedicines: topMedicines.map((medicine: any) => ({
-        productId: medicine.productId,
-        name: medicine.productName,
-        prescriptions: medicine._sum.quantity,
-        revenue: medicine._sum.total
-      })),
-      consultationsByMonth: consultationsByMonth || [],
-      userRoles: userRoles.map((role: any) => ({
-        name: role.role,
-        value: role._count.role,
-        color: role.role === 'admin' ? '#10b981' : role.role === 'sales' ? '#3b82f6' : '#f59e0b'
-      })),
-      studentDepartments: studentDepartments.map((dept: any) => ({
-        name: dept.department || 'Unknown',
-        value: dept._count.department,
-        color: '#3b82f6'
-      }))
-    });
+    return NextResponse.json(
+     safeJson(
+      {
+        warehouse: {
+          id: warehouse.id.toString(),
+          name: warehouse.name,
+          code: warehouse.warehouseCode,
+          address: warehouse.address,
+          email: warehouse.email,
+          phone: warehouse.phoneNumber
+        },
+        metrics: {
+          totalUsers,
+          totalProducts,
+          totalConsultations,
+          totalStudents,
+          totalSuppliers,
+          totalRevenue: totalRevenue._sum.grandTotal || 0,
+          avgConsultationValue
+        },
+        recentConsultations: recentConsultations.map((consultation: any) => ({
+          id: consultation.id,
+          invoiceNo: consultation.invoiceNo,
+          studentName: consultation.selectedStudent?.name || 'Walk-in Student',
+          studentMatric: consultation.selectedStudent?.matricNumber || 'N/A',
+          diagnosis: consultation.diagnosis || 'General consultation',
+          grandTotal: consultation.grandTotal,
+          createdAt: consultation.createdAt,
+          paymentMethod: consultation.paymentMethod?.[0]?.method || 'cash',
+          itemsCount: consultation.consultationItems.length
+        })),
+        lowStockProducts: lowStockProducts.map((product: any) => ({
+          id: product.id,
+          name: product.name,
+          barcode: product.barcode,
+          quantity: product.quantity,
+          unit: product.unit
+        })),
+        topMedicines: topMedicines.map((medicine: any) => ({
+          productId: medicine.productId,
+          name: medicine.productName,
+          prescriptions: medicine._sum.quantity,
+          revenue: medicine._sum.total
+        })),
+        consultationsByMonth: consultationsByMonth || [],
+        userRoles: userRoles.map((role: any) => ({
+          name: role.role,
+          value: role._count.role,
+          color: role.role === 'admin' ? '#10b981' : role.role === 'sales' ? '#3b82f6' : '#f59e0b'
+        })),
+        studentDepartments: studentDepartments.map((dept: any) => ({
+          name: dept.department || 'Unknown',
+          value: dept._count.department,
+          color: '#3b82f6'
+        }))
+      }
+     )
+  );
   } catch (error) {
     console.error('Failed to fetch warehouse dashboard stats:', error);
     return NextResponse.json(

@@ -95,9 +95,13 @@ export default function ConsultationDetailPage() {
     const fetchConsultation = async () => {
       try {
         const response = await fetch(`/api/consultation/${params.consultationId}`)
-        const consultations = await response.json()
-        const consultationData = consultations
-        setConsultation(consultationData)
+        const result = await response.json()
+        
+        if (response.ok && result.success) {
+          setConsultation(result.data)
+        } else {
+          console.error("Error fetching consultation:", result.error)
+        }
       } catch (error) {
         console.error("Error fetching consultation:", error)
       } finally {
@@ -105,7 +109,7 @@ export default function ConsultationDetailPage() {
       }
     }
 
-    if (warehouseId) {
+    if (warehouseId && params.consultationId) {
       fetchConsultation()
     }
   }, [warehouseId, params.consultationId])

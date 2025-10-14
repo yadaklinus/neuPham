@@ -3,13 +3,16 @@ import offlinePrisma from "@/lib/oflinePrisma";
 
 export async function POST(req: NextRequest) {
     try {
-        const {
-            warehouseId
-        } = await req.json()
+        const { warehouseId } = await req.json();
+        
+        if (!warehouseId) {
+            return NextResponse.json({ error: "Warehouse ID is required" }, { status: 400 });
+        }
         
         const consultations = await offlinePrisma.consultation.findMany({
             where: {
-                warehousesId:warehouseId
+                warehousesId: warehouseId,
+                isDeleted: false
             },
             include: {
                 selectedStudent: {
@@ -39,11 +42,18 @@ export async function POST(req: NextRequest) {
             orderBy: { createdAt: 'desc' }
         });
         
+        return NextResponse.json({
+            success: true,
+            data: consultations,
+            count: consultations.length
+        }, { status: 200 });
         
-        return NextResponse.json(consultations, { status: 200 });
     } catch (error) {
         console.error("Consultation list fetch error:", error);
-        return NextResponse.json(error, { status: 500 });
+        return NextResponse.json({ 
+            error: "Failed to fetch consultations",
+            details: error instanceof Error ? error.message : "Unknown error"
+        }, { status: 500 });
     } finally {
         await offlinePrisma.$disconnect();
     }

@@ -36,13 +36,16 @@ export default function ConsultationListPage() {
 
   const router = useRouter()
   const warehouseId = getWareHouseId()
-  const { data: consultationData, loading, error } = fetchWareHouseData("/api/consultation/list", { warehouseId })
+  const { data: consultationResponse, loading, error } = fetchWareHouseData("/api/consultation/list", { warehouseId })
   
   useEffect(() => {
     setEndPoint(`/warehouse/${warehouseId}/${session?.user?.role}`)
   }, [session, warehouseId])
   
-  if (!consultationData) return <Loading/>
+  if (!consultationResponse) return <Loading/>
+
+  // Handle the new API response format
+  const consultationData = consultationResponse.success ? consultationResponse.data : consultationResponse
 
   const filteredConsultations = consultationData.filter((consultation: any) => {
     const matchesSearch =
@@ -88,15 +91,19 @@ export default function ConsultationListPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ consultationId }),
+        body: JSON.stringify({ 
+          consultationId,
+          userId: session?.user?.id || "system" // Provide user ID for tracking
+        }),
       })
 
-      if (response.ok) {
-        alert("Consultation deleted successfully and products returned to stock!")
+      const result = await response.json()
+
+      if (response.ok && result.success) {
+        alert(result.message || "Consultation deleted successfully and products returned to stock!")
         window.location.reload()
       } else {
-        const error = await response.json()
-        alert(`Error: ${error}`)
+        alert(`Error: ${result.error || "Failed to delete consultation"}`)
       }
     } catch (error) {
       alert("Error deleting consultation")

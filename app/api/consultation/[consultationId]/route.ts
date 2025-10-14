@@ -7,8 +7,11 @@ export async function GET(
     context: { params: Promise<{ consultationId: string }> }
 ) {
     try {
-        // Removed 'await' since context.params is not a Promise
-        const  {consultationId}  = await context.params; 
+        const { consultationId } = await context.params;
+        
+        if (!consultationId) {
+            return NextResponse.json({ error: "Consultation ID is required" }, { status: 400 });
+        }
         
         const consultation = await offlinePrisma.consultation.findUnique({
             where: { 
@@ -43,14 +46,20 @@ export async function GET(
         });
 
         if (!consultation) {
-            return NextResponse.json("Consultation not found", { status: 404 });
+            return NextResponse.json({ error: "Consultation not found" }, { status: 404 });
         }
 
-        return NextResponse.json(consultation, { status: 200 });
+        return NextResponse.json({
+            success: true,
+            data: consultation
+        }, { status: 200 });
+        
     } catch (error) {
         console.error("Consultation fetch error:", error);
-        // Returning a generic error message is safer for production
-        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+        return NextResponse.json({ 
+            error: "Failed to fetch consultation",
+            details: error instanceof Error ? error.message : "Unknown error"
+        }, { status: 500 });
     } finally {
         await offlinePrisma.$disconnect();
     }

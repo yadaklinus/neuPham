@@ -1,7 +1,5 @@
-import { PrismaClient } from "@/prisma/generated/offline";
 import { NextRequest, NextResponse } from "next/server";
-
-const prisma = new PrismaClient()
+import prisma from "@/lib/oflinePrisma";
 
 export async function GET(req: NextRequest) {
   try {
@@ -26,7 +24,7 @@ export async function GET(req: NextRequest) {
 
     if (!warehouse) {
       return NextResponse.json(
-        { error: 'Clinic not found' },
+        { error: 'Warehouse/Clinic not found' },
         { status: 404 }
       );
     }
@@ -196,7 +194,7 @@ export async function POST(req: NextRequest) {
 
     if (!warehouse) {
       return NextResponse.json(
-        { error: 'Clinic not found' },
+        { error: 'Warehouse/Clinic not found' },
         { status: 404 }
       );
     }

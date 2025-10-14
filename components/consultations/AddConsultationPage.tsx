@@ -525,8 +525,8 @@ export default function AddConsultationPage() {
       // First, create the consultation
       const consultationResponse = await axios.post("/api/consultation", consultationData)
   
-      if (!consultationResponse.data || consultationResponse.status !== 200) {
-        throw new Error("Failed to create consultation")
+      if (!consultationResponse.data.success || consultationResponse.status !== 200) {
+        throw new Error(consultationResponse.data.error || "Failed to create consultation")
       }
   
       // If there were balance payments, deduct from student balance

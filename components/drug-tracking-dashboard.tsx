@@ -81,25 +81,49 @@ export function DrugTrackingDashboard({ warehouseId, className = "" }: DrugTrack
   }, [warehouseId, currentPage, itemsPerPage, filterAction])
 
   const fetchTrackingData = async () => {
+    if (!warehouseId) return
+    
     setLoading(true)
     try {
-      // Fetch stock movements
-      const movementsResponse = await fetch(
-        `/api/warehouse/drug-tracking?warehouseId=${warehouseId}&page=${currentPage}&limit=${itemsPerPage}&action=${filterAction}`
-      )
-      const movementsData = await movementsResponse.json()
+      // Fetch stock movements (if drug-tracking API exists)
+      let movementsData = { trackingRecords: [] }
+      try {
+        const movementsResponse = await fetch(
+          `/api/warehouse/drug-tracking?warehouseId=${warehouseId}&page=${currentPage}&limit=${itemsPerPage}&action=${filterAction}`
+        )
+        if (movementsResponse.ok) {
+          movementsData = await movementsResponse.json()
+        }
+      } catch (error) {
+        console.log('Drug tracking API not available, using empty data')
+      }
       
       // Fetch suspicious activities
       const securityResponse = await fetch(
         `/api/warehouse/anti-theft?warehouseId=${warehouseId}&severity=${filterSeverity}`
       )
+      
+      if (!securityResponse.ok) {
+        throw new Error(`Anti-theft API error: ${securityResponse.status}`)
+      }
+      
       const securityData = await securityResponse.json()
       
       setStockMovements(movementsData.trackingRecords || [])
       setSuspiciousActivities(securityData.suspiciousActivities || [])
-      setSecurityMetrics(securityData.securityMetrics || {})
+      setSecurityMetrics(securityData.securityMetrics || {
+        totalSuspiciousActivities: 0,
+        highSeverityCount: 0,
+        mediumSeverityCount: 0,
+        lowSeverityCount: 0,
+        stockDiscrepanciesCount: 0,
+        highRiskStaffCount: 0
+      })
     } catch (error) {
       console.error('Failed to fetch tracking data:', error)
+      // Set empty data to prevent crashes
+      setSuspiciousActivities([])
+      
     } finally {
       setLoading(false)
     }
