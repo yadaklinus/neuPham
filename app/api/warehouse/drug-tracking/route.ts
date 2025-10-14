@@ -1,4 +1,4 @@
-import { PrismaClient } from "@/prisma/generated/online";
+import { PrismaClient } from "@/prisma/generated/offline";
 import { NextRequest, NextResponse } from "next/server";
 
 const prisma = new PrismaClient()
@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
     const { warehouseId, productId, action, quantity, staffId, reason, patientId } = await req.json()
 
     // Verify warehouse exists
-    const warehouse = await prisma.warehouses_online.findUnique({
+    const warehouse = await prisma.warehouses.findUnique({
       where: { warehouseCode: warehouseId, isDeleted: false }
     });
 
@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Verify product exists
-    const product = await prisma.product_online.findUnique({
+    const product = await prisma.product.findUnique({
       where: { id: productId, isDeleted: false }
     });
 
@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Create drug tracking record for anti-theft monitoring
-    const trackingRecord = await prisma.stockTracking_online.create({
+    const trackingRecord = await prisma.stockTracking.create({
       data: {
         productId,
         warehouseId: warehouse.id,
@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
         );
       }
       
-      await prisma.product_online.update({
+      await prisma.product.update({
         where: { id: productId },
         data: { 
           quantity: { decrement: quantity },
@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
         }
       });
     } else if (action === 'received') {
-      await prisma.product_online.update({
+      await prisma.product.update({
         where: { id: productId },
         data: { 
           quantity: { increment: quantity },
@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Check for suspicious activity (anti-theft feature)
-    const recentActivity = await prisma.stockTracking_online.findMany({
+    const recentActivity = await prisma.stockTracking.findMany({
       where: {
         productId,
         staffId,
@@ -94,7 +94,7 @@ export async function POST(req: NextRequest) {
 
     // Flag suspicious activity if more than 50 units dispensed by same staff in 24h
     if (action === 'dispensed' && totalDispensedToday > 50) {
-      await prisma.suspiciousActivity_online.create({
+      await prisma.suspiciousActivity.create({
         data: {
           staffId,
           productId,
@@ -158,7 +158,7 @@ export async function GET(req: NextRequest) {
 
     // Get tracking records with pagination
     const [trackingRecords, totalCount] = await Promise.all([
-      prisma.stockTracking_online.findMany({
+      prisma.stockTracking.findMany({
         where: whereClause,
         include: {
           product: {
@@ -185,7 +185,7 @@ export async function GET(req: NextRequest) {
         skip,
         take: limit
       }),
-      prisma.stockTracking_online.count({
+      prisma.stockTracking.count({
         where: whereClause
       })
     ]);

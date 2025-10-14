@@ -15,7 +15,7 @@ interface RecentSale {
 }
 
 interface RecentSalesTableProps {
-  sales: RecentSale[]
+  sales: any
 }
 
 export function RecentSalesTable({ sales }: RecentSalesTableProps) {
@@ -39,7 +39,7 @@ export function RecentSalesTable({ sales }: RecentSalesTableProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sales.map((sale) => (
+              {sales.map((sale:any) => (
                 <TableRow key={sale.id}>
                   <TableCell className="font-medium">{sale.id}</TableCell>
                   <TableCell>{sale?.customer?.name}</TableCell>

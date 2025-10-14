@@ -746,7 +746,7 @@ const [isSearching, setIsSearching] = useState(false)
               </BreadcrumbList>
             </Breadcrumb>
           </div>
-          <SystemStatus/>
+           
         </header>
 
         <div className="flex flex-1 flex-col gap-6 p-6">

@@ -293,7 +293,6 @@ export default function AddConsultationPage() {
     }else{
       return product.cost
     }
-    return type === "wholesale" ? product.wholeSalePrice : product.retailPrice
   }
 
   const addProductToConsultation = (isBarcode = false) => {
@@ -463,10 +462,7 @@ export default function AddConsultationPage() {
       return
     }
   
-    if (paymentMethods.length === 0) {
-      alert("Please add at least one payment method")
-      return
-    }
+    
   
     setIsSubmitting(true)
   
@@ -510,8 +506,8 @@ export default function AddConsultationPage() {
         taxAmount,
         grandTotal,
         paymentMethods: otherPayments,
-        amountPaid: otherPaymentsTotal + totalBalanceUsed,
-        balance: finalBalance,
+        amountPaid:grandTotal,
+        balance: 0,
         diagnosis,
         symptoms,
         consultantNotes,
@@ -523,6 +519,8 @@ export default function AddConsultationPage() {
           name: selectedStudentData?.name || "Walk-in Student",
         }
       }
+
+      console.log(consultationData)
   
       // First, create the consultation
       const consultationResponse = await axios.post("/api/consultation", consultationData)
@@ -758,7 +756,7 @@ export default function AddConsultationPage() {
               </BreadcrumbList>
             </Breadcrumb>
           </div>
-          <SystemStatus/>
+           
         </header>
 
         <div className="flex flex-1 flex-col gap-6 p-6">
@@ -769,7 +767,7 @@ export default function AddConsultationPage() {
 
           <div className="grid gap-6 lg:grid-cols-3">
             {/* Left Column - Consultation Details */}
-            <div className="lg:col-span-2 space-y-6">
+            <div className="lg:col-span-4 space-y-6">
               {/* Student Selection */}
               <Card>
                 <CardHeader>
@@ -861,7 +859,7 @@ export default function AddConsultationPage() {
     <CardTitle>Prescribe Medicine</CardTitle>
     <CardDescription>Select medicines to prescribe to the student</CardDescription>
   </CardHeader>
-  <CardContent className="space-y-4">
+  <CardContent className="space-y-2">
     {/* Optimized Product Combobox */}
     <div className="space-y-2">
       <Label>Medicine</Label>
@@ -1209,9 +1207,9 @@ export default function AddConsultationPage() {
             </div>
 
             {/* Right Column - Summary & Payment */}
-            <div className="space-y-6">
+            {/* <div className="space-y-6"> */}
               {/* Consultation Summary */}
-              <Card>
+              {/* <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Calculator className="h-5 w-5" />
@@ -1257,17 +1255,17 @@ export default function AddConsultationPage() {
                     />
                   </div>
                 </CardContent>
-              </Card>
+              </Card> */}
 
               {/* Multiple Payment Methods */}
-              <Card>
+              {/* <Card>
                 <CardHeader>
                   <CardTitle>Payment Methods</CardTitle>
                   <CardDescription>Add multiple payment methods for this consultation</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-4"> */}
                   {/* Add Payment Form */}
-                  {selectedStudent && studentBalance > 0 && (
+                  {/* {selectedStudent && studentBalance > 0 && (
                         <div className="p-4 border rounded-lg border-green-200">
                           <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center gap-2">
@@ -1382,10 +1380,10 @@ export default function AddConsultationPage() {
         <Plus className="mr-2 h-4 w-4" />
         Add Payment
       </Button>
-    </div>
+    </div> */}
 
                   {/* Payment Methods List */}
-                  {paymentMethods.length > 0 && (
+                  {/* {paymentMethods.length > 0 && (
                     <div className="space-y-2">
                       <Label>Added Payments</Label>
                       <div className="space-y-2">
@@ -1422,10 +1420,10 @@ export default function AddConsultationPage() {
                         ))}
                       </div>
                     </div>
-                  )}
+                  )} */}
 
                   {/* Remaining Balance Alert */}
-                  {balance > 0 && paymentMethods.length > 0 && (
+                  {/* {balance > 0 && paymentMethods.length > 0 && (
                     <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                       <p className="text-sm text-yellow-800">
                         <strong>Remaining Balance:</strong> ${balance.toFixed(2)}
@@ -1433,10 +1431,10 @@ export default function AddConsultationPage() {
                     </div>
                   )}
                 </CardContent>
-              </Card>
+              </Card> */}
 
               {/* Notes */}
-              <Card>
+              {/* <Card>
                 <CardHeader>
                   <CardTitle>Additional Notes</CardTitle>
                 </CardHeader>
@@ -1448,8 +1446,8 @@ export default function AddConsultationPage() {
                     rows={3}
                   />
                 </CardContent>
-              </Card>
-            </div>
+              </Card> */}
+            {/* </div> */}
           </div>
 
           {/* Action Buttons */}
@@ -1458,7 +1456,7 @@ export default function AddConsultationPage() {
           <Button
               ref={finalizeConsultationButtonRef}
               onClick={handleFormSubmit}
-              disabled={consultationItems?.length === 0 || !selectedStudent || paymentMethods.length === 0 || isSubmitting}
+              disabled={consultationItems?.length === 0 || !selectedStudent  || isSubmitting}
               className="min-w-[140px]"
             >
               {isSubmitting ? (

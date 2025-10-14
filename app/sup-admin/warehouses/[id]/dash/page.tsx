@@ -1,5 +1,8 @@
 "use client"
 
+
+import * as XLSX from 'xlsx';
+
 import { useState, useEffect } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import { AppSidebar } from "@/components/app-sidebar"
@@ -14,6 +17,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
@@ -62,7 +66,10 @@ import {
   Crown,
   Calendar,
   Target,
-  Star
+  Star,
+  Search,
+  Download,
+  FileText
 } from "lucide-react"
 import {
   LineChart,
@@ -82,8 +89,8 @@ import fetchData from "@/hooks/fetch-data"
 import { formatCurrency } from "@/lib/utils"
 import fetchWareHouseData from "@/hooks/fetch-invidual-data"
 import Link from "next/link"
-import { SalesCalendar } from "@/components/sales-calendar"
-import { DailySalesModal } from "@/components/daily-sales-modal"
+import { SalesCalendar } from '@/components/sales-calendar';
+import { DailySalesModal } from '@/components/daily-sales-modal';
 
 // Color palette for charts
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
@@ -94,8 +101,13 @@ export default function WarehouseDetailsPage() {
   const [selectedPeriod, setSelectedPeriod] = useState("12months")
   const [detailedAnalytics, setDetailedAnalytics] = useState<any>(null)
   const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(false)
+  const [searchTerm, setSearchTerm] = useState("")
+  // const [filteredProducts, setFilteredProducts] = useState<any[]>([])
+  const [isSearching, setIsSearching] = useState(false)
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1)
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
-  const [showDailyModal, setShowDailyModal] = useState(false)
+    const [showDailyModal, setShowDailyModal] = useState(false)
   const wareHouseId = path?.split("/")[3]
   
   // Fetch warehouse data using the ID from params
@@ -131,14 +143,149 @@ export default function WarehouseDetailsPage() {
   }, [wareHouseId])
 
   const handleDateClick = (date: string) => {
-    setSelectedDate(date)
-    setShowDailyModal(true)
+      setSelectedDate(date)
+      setShowDailyModal(true)
+    }
+  
+    const handleCloseModal = () => {
+      setShowDailyModal(false)
+      setSelectedDate(null)
+    }
+
+  // useEffect(() => {
+  //   if (!searchTerm.trim()) {
+  //     setFilteredProducts([])
+  //   }
+  // }, [searchTerm])
+
+  // Search products
+  // const searchProducts = async () => {
+  //   if (!wareHouseId || !searchTerm.trim()) {
+  //     setFilteredProducts([])
+  //     return
+  //   }
+
+  //   try {
+  //     setIsSearching(true)
+  //     const response = await fetch('/api/warehouse/products/search', {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //       },
+  //       body: JSON.stringify({
+  //         warehouseId: wareHouseId,
+  //         searchTerm: searchTerm.trim(),
+  //         limit: 50
+  //       })
+  //     })
+
+  //     if (response.ok) {
+  //       const data = await response.json()
+  //       setFilteredProducts(data.products)
+  //     }
+  //   } catch (error) {
+  //     console.error('Error searching products:', error)
+  //   } finally {
+  //     setIsSearching(false)
+  //   }
+  // }
+
+  // Export report
+  const exportReport = async (reportType: string) => {
+    if (!wareHouseId) return
+
+    try {
+      const response = await fetch('/api/warehouse/reports/export', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          warehouseId: wareHouseId,
+          reportType,
+          month: selectedMonth,
+          year: selectedYear
+        })
+      })
+
+      if (response.ok) {
+        // const data = await response.json()
+        
+        // //Create and download CSV file
+        // const blob = new Blob([data.csvData], { type: 'text/csv' })
+        // const url = window.URL.createObjectURL(blob)
+        // const a = document.createElement('a')
+        // a.href = url
+        // a.download = data.filename
+        // document.body.appendChild(a)
+        // a.click()
+        // window.URL.revokeObjectURL(url)
+        // document.body.removeChild(a)
+        
+        const data = await response.json();
+
+// Step 1: Parse CSV string into 2D array
+const rows = data.csvData
+  .trim()
+  .split("\n")
+  .map((row:any) => row.split(",").map((cell:any) => cell.replace(/^"|"$/g, "")));
+
+// Step 2: Convert array of arrays to worksheet
+const worksheet = XLSX.utils.aoa_to_sheet(rows);
+
+// Step 3: Create workbook and append sheet
+const workbook = XLSX.utils.book_new();
+XLSX.utils.book_append_sheet(workbook, worksheet, "Report");
+
+// Step 4: Trigger Excel download
+XLSX.writeFile(workbook, data.filename.replace(".csv", ".xlsx"));
+       console.log("sharp")
+      }
+    } catch (error) {
+      console.error('Error exporting report:', error)
+    }
   }
 
-  const handleCloseModal = () => {
-    setShowDailyModal(false)
-    setSelectedDate(null)
+  // Generate monthly report
+  const generateMonthlyReport = async () => {
+    if (!wareHouseId) return
+
+    try {
+      const response = await fetch('/api/warehouse/reports/monthly', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          warehouseId: wareHouseId,
+          month: selectedMonth,
+          year: selectedYear,
+          reportType: 'all'
+        })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        // Handle the report data as needed
+        //console.log('Monthly report generated:', data)
+      }
+    } catch (error) {
+      console.error('Error generating monthly report:', error)
+    }
   }
+
+  const filteredProducts = warehouseData?.products?.filter((product:any) => {
+    const matchesSearch =
+      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.barcode.toLowerCase().includes(searchTerm.toLowerCase()) 
+
+
+    return matchesSearch
+  })
+
+  const productSum = warehouseData?.products?.reduce((sum:any, sale:any) => sum + sale.cost, 0)
+  const productRetailSum = warehouseData?.products?.reduce((sum:any, sale:any) => sum + sale.retailPrice, 0)
+  const productWholesaleSum = warehouseData?.products?.reduce((sum:any, sale:any) => sum + sale.wholeSalePrice, 0)
 
   // Loading state
   if (loading) {
@@ -232,31 +379,27 @@ export default function WarehouseDetailsPage() {
 
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
           {/* Clinic Header - Mobile Responsive */}
-          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-            <div className="flex flex-col sm:flex-row items-start gap-4 w-full lg:w-auto">
-              <div className="flex items-center justify-center w-16 h-16 bg-blue-100 rounded-lg">
+          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+            <div className="flex flex-col sm:flex-row items-start gap-4">
+              <div className="flex items-center justify-center w-16 h-16 bg-blue-100 rounded-lg flex-shrink-0">
                 <Warehouse className="h-8 w-8 text-blue-600" />
               </div>
-              <div>
-                <h1 className="text-2xl font-semibold text-blue-600">{warehouseData.name} Clinic Management System</h1>
-                <p className="text-muted-foreground font-mono">Clinic ID: {warehouseData.warehouseCode}</p>
-                <div className="bg-blue-50 p-3 rounded-lg mt-2">
-                  <p className="text-sm text-blue-800 font-medium">🏥 Comprehensive Drug Tracking & Anti-Theft System</p>
-                  <p className="text-xs text-blue-600">Monitoring all medicine dispensing to prevent theft and ensure patient safety</p>
-                </div>
-                <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
+              <div className="min-w-0 flex-1">
+                <h1 className="text-xl sm:text-2xl font-semibold text-blue-600 break-words">{warehouseData.name} Clinic</h1>
+                <p className="text-muted-foreground font-mono text-sm">{warehouseData.warehouseCode}</p>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mt-2 text-sm text-muted-foreground">
                   <div className="flex items-center gap-1">
-                    <MapPin className="h-4 w-4" />
-                    <span>{warehouseData.address}</span>
+                    <MapPin className="h-4 w-4 flex-shrink-0" />
+                    <span className="break-words">{warehouseData.address}</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <Users className="h-4 w-4" />
-                    <span>{warehouseData.stats?.assignedUsers || 0} Medical Staff</span>
+                    <Users className="h-4 w-4 flex-shrink-0" />
+                    <span>{warehouseData.stats?.assignedUsers || 0} Staff Members</span>
                   </div>
                 </div>
               </div>
             </div>
-            <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
+            <div className="flex flex-col sm:flex-row gap-2">
               <Button 
                 variant="outline" 
                 onClick={() => router.push('/sup-admin/warehouses/list')}
@@ -264,14 +407,12 @@ export default function WarehouseDetailsPage() {
                 size="sm"
               >
                 <ArrowLeft className="h-4 w-4" />
-                <span className="hidden sm:inline">Back to List</span>
-                <span className="sm:hidden">Back</span>
+                Back to List
               </Button>
               <Button asChild className="gap-2 w-full sm:w-auto" size="sm">
                 <Link href={`/sup-admin/warehouses/${wareHouseId}/edit`}>
                   <Edit className="h-4 w-4" />
-                  <span className="hidden sm:inline">Edit Clinic</span>
-                  <span className="sm:hidden">Edit</span>
+                  Edit Clinic
                 </Link>
               </Button>
             </div>
@@ -281,103 +422,119 @@ export default function WarehouseDetailsPage() {
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Medicines</CardTitle>
+                <CardTitle className="text-sm font-medium">Total Products</CardTitle>
                 <Package className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{warehouseData.stats?.totalProducts || 0}</div>
                 <p className="text-xs text-muted-foreground">
-                  Medicines in stock
+                  Active inventory items
                 </p>
               </CardContent>
             </Card>
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Students</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-sm font-medium">Total Sales</CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{warehouseData.stats?.totalStudents || 0}</div>
+                <div className="text-2xl font-bold">
+                  {formatCurrency(warehouseData.stats?.totalSales)}
+                </div>
                 <p className="text-xs text-muted-foreground">
-                  Registered students
+                  Total sales amount
                 </p>
               </CardContent>
             </Card>
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Consultations</CardTitle>
-                <Activity className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
+                <ShoppingCart className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{warehouseData.stats?.totalConsultations || 0}</div>
+                <div className="text-2xl font-bold">{warehouseData.stats?.totalOrders || 0}</div>
                 <p className="text-xs text-muted-foreground">
-                  Patient consultations
+                  Completed transactions
                 </p>
               </CardContent>
             </Card>
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Medical Staff</CardTitle>
+                <CardTitle className="text-sm font-medium">Assigned Users</CardTitle>
                 <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{warehouseData.stats?.assignedUsers || 0}</div>
                 <p className="text-xs text-muted-foreground">
-                  Active clinic staff
+                  Active warehouse staff
                 </p>
               </CardContent>
             </Card>
-            
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Product Vlaue </CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{formatCurrency(productSum) || 0}</div>
+               
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Product Retail Vlaue </CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{formatCurrency(productRetailSum) || 0}</div>
+               
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Product WholeSale Vlaue </CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{formatCurrency(productWholesaleSum) || 0}</div>
+               
+              </CardContent>
+            </Card>
           </div>
 
-          {/* Medicine Stock Alert & Anti-Theft Monitoring - Mobile Responsive */}
-          <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2">
-            {detailedAnalytics?.lowStockProducts && detailedAnalytics.lowStockProducts.length > 0 && (
-              <Card className="border-yellow-200 bg-yellow-50">
-                <CardContent className="pt-6">
-                  <div className="flex items-center gap-2 text-yellow-800">
-                    <AlertTriangle className="h-5 w-5" />
-                    <div>
-                      <p className="font-medium">Medicine Stock Alert</p>
-                      <p className="text-sm">
-                        {detailedAnalytics.lowStockProducts.length} medicines are running low on stock
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-            
-            <Card className="border-red-200 bg-red-50">
+          {/* Low Stock Alert */}
+          {detailedAnalytics?.lowStockProducts && detailedAnalytics.lowStockProducts.length > 0 && (
+            <Card className="border-yellow-200 bg-yellow-50">
               <CardContent className="pt-6">
-                <div className="flex items-center gap-2 text-red-800">
-                  <AlertCircle className="h-5 w-5" />
+                <div className="flex items-center gap-2 text-yellow-800">
+                  <AlertTriangle className="h-5 w-5" />
                   <div>
-                    <p className="font-medium">Anti-Theft Monitoring</p>
+                    <p className="font-medium">Low Stock Alert</p>
                     <p className="text-sm">
-                      All drug movements are tracked and monitored for suspicious activity
+                      {detailedAnalytics.lowStockProducts.length} products are running low on stock
                     </p>
                   </div>
                 </div>
               </CardContent>
             </Card>
-          </div>
+          )}
 
           {/* Warehouse Details */}
           <Card>
             <CardHeader>
-              <CardTitle>Clinic Information</CardTitle>
+              <CardTitle>Warehouse Information</CardTitle>
               <CardDescription>
-                Basic details and contact information for this medical clinic
+                Basic details and contact information for this warehouse
               </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label className="text-sm font-medium">Clinic Name</Label>
+                <Label className="text-sm font-medium">Warehouse Name</Label>
                 <p className="text-sm text-muted-foreground">{warehouseData.name}</p>
               </div>
               <div className="space-y-2">
-                <Label className="text-sm font-medium">Clinic ID</Label>
+                <Label className="text-sm font-medium">Warehouse Code</Label>
                 <p className="text-sm text-muted-foreground">{warehouseData.warehouseCode}</p>
               </div>
               <div className="space-y-2">
@@ -402,15 +559,14 @@ export default function WarehouseDetailsPage() {
           </Card>
 
           <Tabs defaultValue="analytics" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 h-auto">
-              <TabsTrigger value="analytics">Analytics</TabsTrigger>
-              <TabsTrigger value="calendar">Calendar</TabsTrigger>
-              <TabsTrigger value="medicines">Medicines</TabsTrigger>
-              <TabsTrigger value="consultations">Consultations</TabsTrigger>
-              <TabsTrigger value="students">Students</TabsTrigger>
-              <TabsTrigger value="staff">Staff</TabsTrigger>
-              <TabsTrigger value="security">Anti-Theft</TabsTrigger>
-              <TabsTrigger value="reports">Reports</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-1">
+              <TabsTrigger value="analytics" className="text-xs sm:text-sm">Analytics</TabsTrigger>
+              <TabsTrigger value="products" className="text-xs sm:text-sm">Products</TabsTrigger>
+              <TabsTrigger value="consultations" className="text-xs sm:text-sm">Consultations</TabsTrigger>
+              <TabsTrigger value="students" className="text-xs sm:text-sm">Students</TabsTrigger>
+              <TabsTrigger value="users" className="text-xs sm:text-sm">Users</TabsTrigger>
+              <TabsTrigger value="reports" className="text-xs sm:text-sm">Reports</TabsTrigger>
+              <TabsTrigger value="calendar" className="text-xs sm:text-sm">Calendar</TabsTrigger>
             </TabsList>
 
             <TabsContent value="analytics" className="space-y-4">
@@ -421,15 +577,15 @@ export default function WarehouseDetailsPage() {
                 </div>
               ) : detailedAnalytics ? (
                 <>
-                  {/* Monthly Consultation Chart */}
+                  {/* Monthly Sales Chart */}
                   <Card>
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
                         <BarChart3 className="h-5 w-5" />
-                        Monthly Consultation Performance
+                        Monthly Sales Performance
                       </CardTitle>
                       <CardDescription>
-                        Patient consultations and revenue trends over the last 12 months
+                        Revenue and order trends over the last 12 months
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -453,17 +609,17 @@ export default function WarehouseDetailsPage() {
 
                   {/* Top Products and Top Customers */}
                   <div className="grid gap-4 md:grid-cols-2">
-                        <Card>
-                          <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                              <Star className="h-5 w-5" />
-                              Most Prescribed Medicines
-                            </CardTitle>
-                          </CardHeader>
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <Star className="h-5 w-5" />
+                          Top Selling Products
+                        </CardTitle>
+                      </CardHeader>
                       <CardContent>
                         <div className="space-y-3">
                           {detailedAnalytics.topProducts.slice(0, 5).map((product: any, index: number) => (
-                            <div key={product.productId} className="flex items-center justify-between">
+                            <div key={`product.productId ${Math.random()}`} className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
                                 <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-xs font-medium">
                                   {index + 1}
@@ -484,13 +640,13 @@ export default function WarehouseDetailsPage() {
                       </CardContent>
                     </Card>
 
-                        <Card>
-                          <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                              <Crown className="h-5 w-5" />
-                              Frequent Patients
-                            </CardTitle>
-                          </CardHeader>
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <Crown className="h-5 w-5" />
+                          Top Customers
+                        </CardTitle>
+                      </CardHeader>
                       <CardContent>
                         <div className="space-y-3">
                           {detailedAnalytics.topCustomers.slice(0, 5).map((customer: any, index: number) => (
@@ -523,30 +679,40 @@ export default function WarehouseDetailsPage() {
               )}
             </TabsContent>
 
-            <TabsContent value="calendar" className="space-y-4">
-              <div className="space-y-4">
-                <div>
-                  <h2 className="text-lg font-semibold">Daily Sales Calendar</h2>
-                  <p className="text-sm text-muted-foreground">
-                    Click on any date to view detailed sales information and export data
-                  </p>
-                </div>
-                
-                <SalesCalendar
-                  warehouseId={wareHouseId}
-                  onDateClick={handleDateClick}
-                  apiEndpoint="/api/sale/daily-analytics-online"
-                  className="w-full"
-                />
-              </div>
-            </TabsContent>
+            <TabsContent value="products" className="space-y-4">
+              {/* Search Products */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Search Products</CardTitle>
+                  <CardDescription>
+                    Search for products by name, barcode, or description
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Search products..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      
+                      className="flex-1"
+                    />
+                    {/* <Button onClick={searchProducts} disabled={isSearching}>
+                      {isSearching ? (
+                        <Activity className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Search className="h-4 w-4" />
+                      )}
+                    </Button> */}
+                  </div>
+                </CardContent>
+              </Card>
 
-            <TabsContent value="medicines" className="space-y-4">
-              {/* Medicine Stock Overview Cards - Mobile Responsive */}
-              <div className="grid gap-4 grid-cols-2 sm:grid-cols-2 md:grid-cols-4">
+              {/* Stock Overview Cards */}
+              <div className="grid gap-4 md:grid-cols-3">
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-base">Total Medicines</CardTitle>
+                    <CardTitle className="text-base">Total Products</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">{warehouseData.products?.length || 0}</div>
@@ -554,7 +720,7 @@ export default function WarehouseDetailsPage() {
                 </Card>
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-base">Low Stock Medicines</CardTitle>
+                    <CardTitle className="text-base">Low Stock Items</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold text-yellow-600">
@@ -572,44 +738,34 @@ export default function WarehouseDetailsPage() {
                     </div>
                   </CardContent>
                 </Card>
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base">Tracked Movements</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold text-blue-600">
-                      {warehouseData.products?.reduce((sum: number, p: any) => sum + (p.totalDispensed || 0), 0) || 0}
-                    </div>
-                    <p className="text-xs text-muted-foreground">Total dispensed</p>
-                  </CardContent>
-                </Card>
               </div>
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Medicine Inventory with Anti-Theft Tracking</CardTitle>
+                  <CardTitle>Product Inventory</CardTitle>
                   <CardDescription>
-                    All medicines with comprehensive tracking to prevent theft and ensure accountability
+                    All products currently stored in this warehouse
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {warehouseData.products && warehouseData.products.length > 0 ? (
+                  {(filteredProducts.length > 0 ? filteredProducts : warehouseData.products) && 
+                   (filteredProducts.length > 0 ? filteredProducts : warehouseData.products).length > 0 ? (
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Medicine Name</TableHead>
+                          <TableHead>Product Name</TableHead>
                           <TableHead>Barcode</TableHead>
                           <TableHead>Stock Status</TableHead>
-                          <TableHead>Current Stock</TableHead>
-                          <TableHead>Total Dispensed</TableHead>
-                          <TableHead>Last Dispensed</TableHead>
+                          <TableHead>Stock Level</TableHead>
                           <TableHead>Unit</TableHead>
-                          <TableHead>Price</TableHead>
-                          <TableHead>Actions</TableHead>
+                          <TableHead>Cost</TableHead>
+                          <TableHead>Wholesale Price</TableHead>
+                          <TableHead>Retail Price</TableHead>
+                          {/* <TableHead>Action</TableHead> */}
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {warehouseData.products.map((product: any) => {
+                        {(filteredProducts.length > 0 ? filteredProducts : warehouseData.products).map((product: any) => {
                           const stockStatus = getStockStatus(product.quantity)
                           return (
                             <TableRow key={product.id}>
@@ -631,28 +787,26 @@ export default function WarehouseDetailsPage() {
                                   />
                                 </div>
                               </TableCell>
-                              <TableCell>
-                                <span className="text-blue-600 font-medium">
-                                  {product.totalDispensed || 0}
-                                </span>
-                              </TableCell>
-                              <TableCell>
-                                <span className="text-xs text-muted-foreground">
-                                  {product.lastDispensed ? new Date(product.lastDispensed).toLocaleDateString() : 'Never'}
-                                </span>
-                              </TableCell>
                               <TableCell>{product.unit}</TableCell>
+                              <TableCell>{formatCurrency(product.cost)}</TableCell>
+                              <TableCell>{formatCurrency(product.wholeSalePrice)}</TableCell>
                               <TableCell>{formatCurrency(product.retailPrice)}</TableCell>
-                              <TableCell>
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  onClick={() => router.push(`/sup-admin/warehouses/${wareHouseId}/${product.id}/stock-tracking`)}
-                                >
-                                  <Eye className="h-3 w-3 mr-1" />
-                                  Track
-                                </Button>
-                              </TableCell>
+                              {/* <TableCell>
+                                <div className="flex gap-2">
+                                  <Link href={`/sup-admin/warehouses/${wareHouseId}/${product.id}`}>
+                                    <Button variant="outline" size="sm" className="gap-1">
+                                      <Eye className="h-3 w-3" />
+                                      View Details
+                                    </Button>
+                                  </Link>
+                                  <Link href={`/sup-admin/warehouses/wh002/${product.id}/stock-tracking?product=${product.id}`}>
+                                    <Button variant="outline" size="sm" className="gap-1">
+                                      <Activity className="h-3 w-3" />
+                                      Stock Tracking
+                                    </Button>
+                                  </Link>
+                                </div>
+                              </TableCell> */}
                             </TableRow>
                           )
                         })}
@@ -680,61 +834,63 @@ export default function WarehouseDetailsPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {warehouseData.consultation && warehouseData.consultation.length > 0 ? (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Consultation ID</TableHead>
-                          <TableHead>Date</TableHead>
-                          <TableHead>Student</TableHead>
-                          <TableHead>Diagnosis</TableHead>
-                          <TableHead>Total Amount</TableHead>
-                          <TableHead>Balance</TableHead>
-                          <TableHead>Status</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {warehouseData.consultation.slice(0, 20).map((consultation: any) => (
-                          <TableRow key={consultation.id}>
-                            <TableCell className="font-medium">{consultation.invoiceNo}</TableCell>
-                            <TableCell>
-                              {new Date(consultation.createdAt).toLocaleDateString()}
-                            </TableCell>
-                            <TableCell>{consultation.selectedStudent?.name || 'Walk-in Patient'}</TableCell>
-                            <TableCell className="max-w-xs truncate">{consultation.diagnosis || 'Not specified'}</TableCell>
-                            <TableCell>{formatCurrency(consultation.grandTotal)}</TableCell>
-                            <TableCell>{formatCurrency(consultation.balance)}</TableCell>
-                            <TableCell>
-                              {consultation.balance == 0 &&
-                              <Badge variant="default" className="bg-green-600">
-                              Completed
+                  <div className="overflow-x-auto">
+                    {warehouseData.consultation && warehouseData.consultation.length > 0 ? (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="min-w-[120px]">Consultation ID</TableHead>
+                            <TableHead className="min-w-[100px]">Date</TableHead>
+                            <TableHead className="min-w-[150px]">Student</TableHead>
+                            <TableHead className="min-w-[200px]">Diagnosis</TableHead>
+                            <TableHead className="min-w-[120px]">Total Amount</TableHead>
+                            <TableHead className="min-w-[100px]">Balance</TableHead>
+                            <TableHead className="min-w-[100px]">Status</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {warehouseData.consultation.slice(0, 20).map((consultation: any) => (
+                            <TableRow key={consultation.id}>
+                              <TableCell className="font-medium">{consultation.invoiceNo}</TableCell>
+                              <TableCell>
+                                {new Date(consultation.createdAt).toLocaleDateString()}
+                              </TableCell>
+                              <TableCell>{consultation.selectedStudent?.name || 'Walk-in Patient'}</TableCell>
+                              <TableCell className="max-w-xs truncate">{consultation.diagnosis || 'Not specified'}</TableCell>
+                              <TableCell>{formatCurrency(consultation.grandTotal)}</TableCell>
+                              <TableCell>{formatCurrency(consultation.balance)}</TableCell>
+                              <TableCell>
+                                {consultation.balance == 0 &&
+                                <Badge variant="default" className="bg-green-600">
+                                Completed
+                              </Badge>
+                              }
+                              {consultation.balance === consultation.grandTotal && 
+                              <Badge variant="default" className="bg-red-600">
+                              Not Paid
                             </Badge>
                             }
-                            {consultation.balance === consultation.grandTotal && 
-                            <Badge variant="default" className="bg-red-600">
-                            Not Paid
-                          </Badge>
-                          }
-                          {(consultation.balance > 0 && consultation.balance < consultation.grandTotal) &&
-                           <Badge variant="default" className="bg-yellow-600">
-                           Pending
-                         </Badge>
-                         }
-                             
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  ) : (
-                    <div className="text-center py-8">
-                      <ShoppingCart className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                      <h3 className="text-lg font-medium mb-2">No Consultations Found</h3>
-                      <p className="text-muted-foreground">
-                        This clinic doesn't have any consultation records yet.
-                      </p>
-                    </div>
-                  )}
+                            {(consultation.balance > 0 && consultation.balance < consultation.grandTotal) &&
+                             <Badge variant="default" className="bg-yellow-600">
+                             Pending
+                           </Badge>
+                           }
+                               
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    ) : (
+                      <div className="text-center py-8">
+                        <ShoppingCart className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                        <h3 className="text-lg font-medium mb-2">No Consultations Found</h3>
+                        <p className="text-muted-foreground">
+                          This clinic doesn't have any consultation records yet.
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
@@ -748,73 +904,75 @@ export default function WarehouseDetailsPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {warehouseData.student && warehouseData.student.length > 0 ? (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Student Name</TableHead>
-                          <TableHead>Matric Number</TableHead>
-                          <TableHead>Department</TableHead>
-                          <TableHead>Level</TableHead>
-                          <TableHead>Phone</TableHead>
-                          <TableHead>Account Balance</TableHead>
-                          <TableHead>Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {warehouseData.student.slice(0, 20).map((student: any) => (
-                          <TableRow 
-                            key={student.id} 
-                            className="cursor-pointer hover:bg-muted/50"
-                            onClick={() => {
-                              // Navigate to student detail view
-                              router.push(`/sup-admin/warehouses/${wareHouseId}/students/${student.id}`)
-                            }}
-                          >
-                            <TableCell className="font-medium">{student.name}</TableCell>
-                            <TableCell className="font-mono">{student.matricNumber}</TableCell>
-                            <TableCell>{student.department || 'Not specified'}</TableCell>
-                            <TableCell>{student.level || 'Not specified'}</TableCell>
-                            <TableCell>{student.phone}</TableCell>
-                            <TableCell className={student.accountBalance < 0 ? "text-red-600" : "text-green-600"}>
-                              {formatCurrency(student.accountBalance)}
-                            </TableCell>
-                            <TableCell>
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  router.push(`/sup-admin/warehouses/${wareHouseId}/students/${student.id}`)
-                                }}
-                              >
-                                <Eye className="h-3 w-3 mr-1" />
-                                View Details
-                              </Button>
-                            </TableCell>
+                  <div className="overflow-x-auto">
+                    {warehouseData.student && warehouseData.student.length > 0 ? (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="min-w-[150px]">Student Name</TableHead>
+                            <TableHead className="min-w-[120px]">Matric Number</TableHead>
+                            <TableHead className="min-w-[150px]">Department</TableHead>
+                            <TableHead className="min-w-[80px]">Level</TableHead>
+                            <TableHead className="min-w-[120px]">Phone</TableHead>
+                            <TableHead className="min-w-[120px]">Account Balance</TableHead>
+                            <TableHead className="min-w-[120px]">Actions</TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  ) : (
-                    <div className="text-center py-8">
-                      <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                      <h3 className="text-lg font-medium mb-2">No Students Found</h3>
-                      <p className="text-muted-foreground">
-                        This clinic doesn't have any registered students yet.
-                      </p>
-                    </div>
-                  )}
+                        </TableHeader>
+                        <TableBody>
+                          {warehouseData.student.slice(0, 20).map((student: any) => (
+                            <TableRow 
+                              key={student.id} 
+                              className="cursor-pointer hover:bg-muted/50"
+                              onClick={() => {
+                                // Navigate to student detail view
+                                router.push(`/sup-admin/warehouses/${wareHouseId}/students/${student.id}`)
+                              }}
+                            >
+                              <TableCell className="font-medium">{student.name}</TableCell>
+                              <TableCell className="font-mono">{student.matricNumber}</TableCell>
+                              <TableCell>{student.department || 'Not specified'}</TableCell>
+                              <TableCell>{student.level || 'Not specified'}</TableCell>
+                              <TableCell>{student.phone}</TableCell>
+                              <TableCell className={student.accountBalance < 0 ? "text-red-600" : "text-green-600"}>
+                                {formatCurrency(student.accountBalance)}
+                              </TableCell>
+                              <TableCell>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    router.push(`/sup-admin/warehouses/${wareHouseId}/students/${student.id}`)
+                                  }}
+                                >
+                                  <Eye className="h-3 w-3 mr-1" />
+                                  View
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    ) : (
+                      <div className="text-center py-8">
+                        <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                        <h3 className="text-lg font-medium mb-2">No Students Found</h3>
+                        <p className="text-muted-foreground">
+                          This clinic doesn't have any registered students yet.
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
 
-            <TabsContent value="staff" className="space-y-4">
+            <TabsContent value="users" className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-lg font-semibold">Medical Staff</h2>
+                  <h2 className="text-lg font-semibold">Assigned Users</h2>
                   <p className="text-sm text-muted-foreground">
-                    Medical professionals assigned to this clinic
+                    Users who have access to this warehouse
                   </p>
                 </div>
               </div>
@@ -904,178 +1062,55 @@ export default function WarehouseDetailsPage() {
               </Card>
             </TabsContent>
 
-            <TabsContent value="security" className="space-y-4">
-              <div className="space-y-4">
-                <div>
-                  <h2 className="text-lg font-semibold text-red-600">Anti-Theft Security Monitoring</h2>
-                  <p className="text-sm text-muted-foreground">
-                    Comprehensive drug tracking and suspicious activity detection system
-                  </p>
-                </div>
-
-                {/* Security Overview Cards */}
-                <div className="grid gap-4 md:grid-cols-4">
-                  <Card className="border-green-200 bg-green-50">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-base text-green-800">Secure Transactions</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold text-green-600">
-                        {warehouseData.stats?.totalConsultations || 0}
-                      </div>
-                      <p className="text-xs text-green-600">All tracked</p>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="border-yellow-200 bg-yellow-50">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-base text-yellow-800">Flagged Activities</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold text-yellow-600">0</div>
-                      <p className="text-xs text-yellow-600">Under review</p>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="border-red-200 bg-red-50">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-base text-red-800">High Risk Alerts</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold text-red-600">0</div>
-                      <p className="text-xs text-red-600">Immediate attention</p>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="border-blue-200 bg-blue-50">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-base text-blue-800">Stock Audits</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold text-blue-600">Daily</div>
-                      <p className="text-xs text-blue-600">Automated</p>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                {/* Security Features */}
-                <div className="grid gap-4 md:grid-cols-2">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <AlertTriangle className="h-5 w-5 text-yellow-600" />
-                        Drug Tracking Features
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                        <span className="text-sm">Real-time stock monitoring</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                        <span className="text-sm">Staff activity logging</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                        <span className="text-sm">Automatic discrepancy detection</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                        <span className="text-sm">Prescription validation</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                        <span className="text-sm">Excessive dispensing alerts</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <AlertCircle className="h-5 w-5 text-red-600" />
-                        Security Protocols
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                        <span className="text-sm">Biometric access control</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                        <span className="text-sm">Multi-level authorization</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                        <span className="text-sm">Audit trail maintenance</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                        <span className="text-sm">Suspicious pattern detection</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                        <span className="text-sm">Automated reporting</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                {/* Recent Security Events */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Activity className="h-5 w-5" />
-                      Recent Security Events
-                    </CardTitle>
-                    <CardDescription>
-                      Latest drug tracking and security monitoring activities
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-center py-8">
-                      <AlertCircle className="h-12 w-12 mx-auto mb-4 text-green-600" />
-                      <h3 className="text-lg font-medium mb-2 text-green-600">All Clear</h3>
-                      <p className="text-muted-foreground">
-                        No suspicious activities detected. All drug movements are properly tracked and accounted for.
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Quick Security Actions */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Security Management</CardTitle>
-                    <CardDescription>Quick actions for security monitoring and drug tracking</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid gap-4 md:grid-cols-3">
-                      <Button variant="outline" className="h-20 flex-col gap-2 bg-transparent w-full">
-                        <AlertTriangle className="h-6 w-6" />
-                        <span>Stock Audit</span>
-                      </Button>
-                      <Button variant="outline" className="h-20 flex-col gap-2 bg-transparent w-full">
-                        <Activity className="h-6 w-6" />
-                        <span>Activity Log</span>
-                      </Button>
-                      <Button variant="outline" className="h-20 flex-col gap-2 bg-transparent w-full">
-                        <AlertCircle className="h-6 w-6" />
-                        <span>Security Report</span>
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-
             <TabsContent value="reports" className="space-y-4">
+              {/* Report Configuration */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Report Configuration</CardTitle>
+                  <CardDescription>
+                    Configure the period for your reports
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="month">Month</Label>
+                      <Select value={selectedMonth.toString()} onValueChange={(value) => setSelectedMonth(parseInt(value))}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select month" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
+                            <SelectItem key={month} value={month.toString()}>
+                              {new Date(2024, month - 1).toLocaleDateString('en-US', { month: 'long' })}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="year">Year</Label>
+                      <Select value={selectedYear.toString()} onValueChange={(value) => setSelectedYear(parseInt(value))}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select year" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i).map((year) => (
+                            <SelectItem key={year} value={year.toString()}>
+                              {year}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
               <div className="grid gap-4 md:grid-cols-2">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Clinic Performance Summary</CardTitle>
+                    <CardTitle>Performance Summary</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="flex justify-between">
@@ -1083,75 +1118,99 @@ export default function WarehouseDetailsPage() {
                       <span className="font-medium">{formatCurrency(warehouseData.stats?.totalSales || 0)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Total Consultations</span>
-                      <span className="font-medium">{warehouseData.stats?.totalConsultations || 0}</span>
+                      <span>Total Orders</span>
+                      <span className="font-medium">{warehouseData.stats?.totalOrders || 0}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Average Consultation Value</span>
+                      <span>Average Order Value</span>
                       <span className="font-medium">
-                        {formatCurrency((warehouseData.stats?.totalSales || 0) / (warehouseData.stats?.totalConsultations || 1))}
+                        {formatCurrency((warehouseData.stats?.totalSales || 0) / (warehouseData.stats?.totalOrders || 1))}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Medicines in Stock</span>
+                      <span>Products in Stock</span>
                       <span className="font-medium">{warehouseData.stats?.totalProducts || 0}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Medical Staff</span>
+                      <span>Staff Members</span>
                       <span className="font-medium">{warehouseData.stats?.assignedUsers || 0}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Registered Students</span>
-                      <span className="font-medium">{warehouseData.stats?.totalStudents || 0}</span>
                     </div>
                   </CardContent>
                 </Card>
 
                 <Card>
                   <CardHeader>
-                    <CardTitle>Clinic Reports</CardTitle>
+                    <CardTitle>Export Reports</CardTitle>
+                    <CardDescription>
+                      Generate and download various reports
+                    </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-2">
-                    <Button variant="outline" className="w-full justify-start">
-                      <Calendar className="mr-2 h-4 w-4" />
-                      Monthly Clinic Report
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start"
+                      onClick={() => exportReport('monthly')}
+                    >
+                      <FileText className="mr-2 h-4 w-4" />
+                      Export Monthly Report
                     </Button>
-                    <Button variant="outline" className="w-full justify-start">
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start"
+                      onClick={() => exportReport('inventory')}
+                    >
                       <Package className="mr-2 h-4 w-4" />
-                      Medicine Inventory Report
+                      Export Inventory Report
                     </Button>
-                    <Button variant="outline" className="w-full justify-start">
-                      <Activity className="mr-2 h-4 w-4" />
-                      Consultation Records
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start"
+                      onClick={() => exportReport('sales')}
+                    >
+                      <ShoppingCart className="mr-2 h-4 w-4" />
+                      Export Sales Report
                     </Button>
-                    <Button variant="outline" className="w-full justify-start">
-                      <Users className="mr-2 h-4 w-4" />
-                      Student Health Records
-                    </Button>
-                    <Button variant="outline" className="w-full justify-start">
-                      <AlertTriangle className="mr-2 h-4 w-4" />
-                      Drug Tracking Report
-                    </Button>
-                    <Button variant="outline" className="w-full justify-start">
-                      <AlertCircle className="mr-2 h-4 w-4" />
-                      Security Audit Report
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start"
+                      onClick={generateMonthlyReport}
+                    >
+                      <Calendar className="mr-2 h-4 w-4" />
+                      Generate Monthly Analytics
                     </Button>
                   </CardContent>
                 </Card>
               </div>
             </TabsContent>
+            <TabsContent value="calendar" className="space-y-4">
+                          <div className="space-y-4">
+                            <div>
+                              <h2 className="text-lg font-semibold">Daily Sales Calendar</h2>
+                              <p className="text-sm text-muted-foreground">
+                                Click on any date to view detailed sales information and export data
+                              </p>
+                            </div>
+                            
+                            <SalesCalendar
+                              warehouseId={wareHouseId}
+                              onDateClick={handleDateClick}
+                              apiEndpoint="/api/sale/daily-analytics"
+                              className="w-full"
+                            />
+                          </div>
+                        </TabsContent>
           </Tabs>
         </div>
 
         {/* Daily Sales Modal */}
-        <DailySalesModal
-          isOpen={showDailyModal}
-          onClose={handleCloseModal}
-          date={selectedDate}
-          warehouseId={wareHouseId}
-          warehouseName={warehouseData?.name || "Warehouse"}
-          apiEndpoint="/api/sale/daily-analytics-online"
-        />
+                <DailySalesModal
+                  isOpen={showDailyModal}
+                  onClose={handleCloseModal}
+                  date={selectedDate}
+                  warehouseId={wareHouseId}
+                  warehouseName={warehouseData?.name || "Warehouse"}
+                  apiEndpoint="/api/sale/daily-analytics"
+                />
      </>
   )
 }

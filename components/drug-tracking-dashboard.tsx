@@ -113,7 +113,7 @@ export function DrugTrackingDashboard({ warehouseId, className = "" }: DrugTrack
       transferred: "outline"
     }
     return (
-      <Badge variant={variants[action as keyof typeof variants] || "outline"}>
+      <Badge variant={"outline"}>
         {action.charAt(0).toUpperCase() + action.slice(1)}
       </Badge>
     )
@@ -131,7 +131,7 @@ export function DrugTrackingDashboard({ warehouseId, className = "" }: DrugTrack
       low: "text-blue-600"
     }
     return (
-      <Badge variant={variants[severity as keyof typeof variants] || "outline"} className={colors[severity as keyof typeof colors]}>
+      <Badge variant={"default"}>
         {severity.charAt(0).toUpperCase() + severity.slice(1)}
       </Badge>
     )

@@ -1,7 +1,7 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
-import onlinePrisma from "@/lib/onlinePrisma";
+
 import offlinePrisma from "@/lib/oflinePrisma";
 
 const handler = NextAuth({
@@ -29,7 +29,7 @@ const handler = NextAuth({
           }
         } else {
           // ✅ Admin login logic
-          const user = await onlinePrisma.superAdmin_online.findUnique({ where: { email: email,isDeleted:false } });
+          const user = await offlinePrisma.superAdmin.findUnique({ where: { email: email,isDeleted:false } });
           console.log("no")
           if (!user) return null;
           console.log("ok")

@@ -3,11 +3,12 @@ import offlinePrisma from "@/lib/oflinePrisma";
 
 export async function GET(
     req: NextRequest,
-    { params }: { params: { id: string } }
+    context: { params: Promise<{ id: string }> }
 ) {
     try {
+        const {id} = await context.params
         const student = await offlinePrisma.student.findUnique({
-            where: { id: params.id, isDeleted: false },
+            where: { id: id, isDeleted: false },
             include: {
                 Consultation: {
                     where: { isDeleted: false },
@@ -47,8 +48,9 @@ export async function GET(
 
 export async function PUT(
     req: NextRequest,
-    { params }: { params: { id: string } }
+    context: { params: Promise<{ id: string }> }
 ) {
+    const {id} = await context.params
     try {
         const {
             name,
@@ -66,7 +68,7 @@ export async function PUT(
         } = await req.json();
 
         const existingStudent = await offlinePrisma.student.findUnique({
-            where: { id: params.id, isDeleted: false }
+            where: { id: id, isDeleted: false }
         });
 
         if (!existingStudent) {
@@ -74,7 +76,7 @@ export async function PUT(
         }
 
         const updatedStudent = await offlinePrisma.student.update({
-            where: { id: params.id },
+            where: { id: id },
             data: {
                 name,
                 matricNumber,
@@ -108,11 +110,12 @@ export async function PUT(
 
 export async function DELETE(
     req: NextRequest,
-    { params }: { params: { id: string } }
+    context: { params: Promise<{ id: string }> }
 ) {
     try {
+        const {id} = await context.params
         const student = await offlinePrisma.student.findUnique({
-            where: { id: params.id }
+            where: { id: id }
         });
 
         if (!student) {
@@ -120,7 +123,7 @@ export async function DELETE(
         }
 
         const deletedStudent = await offlinePrisma.student.update({
-            where: { id: params.id },
+            where: { id: id },
             data: {
                 isDeleted: true,
                 sync: false,

@@ -11,7 +11,7 @@ generator client {
 
 // Offline database (SQLite) - Main database
 datasource db {
-  provider = "sqlite"
+  provider = "postgres"
   url      = env("DATABASE_URL")
 }
 
@@ -72,6 +72,8 @@ model users {
   sync         Boolean     @default(false) // Sync field
   syncedAt     DateTime? // When last synced
   isDeleted    Boolean     @default(false)
+  stocktracking stockTracking[]
+  suspiciousActivity suspiciousActivity[]
 }
 
 model Settings {
@@ -115,6 +117,8 @@ model Warehouses {
   quotation       Quotation[]
   balanceTransaction  BalanceTransaction[]
   quotationItem   QuotationItem[]
+  stocktracking stockTracking[]
+  suspiciousActivity suspiciousActivity[]
   sync            Boolean           @default(false) // Sync field
   syncedAt        DateTime? // When last synced
   isDeleted       Boolean           @default(false)
@@ -244,6 +248,7 @@ model Student {
   balancePayment      BalancePayment[]
   balanceTransaction  BalanceTransaction[] // Add this relation
   quotation           Quotation[]
+  stocktracking stockTracking[]
   createdAt           DateTime            @default(now())
   updatedAt           DateTime            @updatedAt
   sync                Boolean             @default(false) // Sync field
@@ -306,6 +311,8 @@ model Product {
   consultationItem ConsultationItem[]
   purchaseItem   PurchaseItem[]
   quotationItem  QuotationItem[]
+  stocktracking stockTracking[]
+  suspiciousActivity suspiciousActivity[]
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
   sync           Boolean         @default(false) // Sync field
@@ -451,4 +458,54 @@ model QuotationItem {
   sync          Boolean     @default(false) // Sync field
   syncedAt      DateTime? // When last synced
   isDeleted     Boolean     @default(false)
+}
+
+model stockTracking {
+  id            String    @id @default(cuid())
+  action        String // 'dispensed', 'received', 'adjusted', 'transferred'
+  quantity      Int
+  previousStock Int
+  newStock      Int
+  reason        String
+  timestamp     DateTime  @default(now())
+  ipAddress     String?
+  userAgent     String?
+
+  // Relationships (linking to new models)
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  warehouseId String
+  warehouse   Warehouses @relation(fields: [warehouseId], references: [id])
+
+  staffId   String
+  staff     users   @relation(fields: [staffId], references: [id])
+
+  patientId String?
+  patient   Student?  @relation(fields: [patientId], references: [id])
+}
+
+// Model for logging suspicious activities, corrected to fit the new schema
+model suspiciousActivity {
+  id           String    @id @default(cuid())
+  activityType String // e.g., 'excessive_dispensing'
+  description  String
+  severity     String // 'low', 'medium', 'high'
+  timestamp    DateTime  @default(now())
+
+  // Resolution fields based on new API logic
+  resolved     Boolean?  @default(false)
+  resolution   String?
+  resolvedBy   String?
+  resolvedAt   DateTime?
+
+  // Relationships (linking to new models)
+  staffId   String
+  staff     users      @relation(fields: [staffId], references: [id])
+
+  productId String
+  product   Product    @relation(fields: [productId], references: [id])
+
+  warehouseId String
+  warehouse Warehouses @relation(fields: [warehouseId], references: [id])
 }

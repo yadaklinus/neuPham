@@ -53,7 +53,7 @@ export async function PUT(req: NextRequest) {
                     notes,
                     grandTotal,
                     validUntil: validUntil ? new Date(validUntil) : null,
-                    selectedCustomerId: customer.id,
+                    selectedStudentId: customer.id,
                     status: status || existingQuotation.status
                 }
             })

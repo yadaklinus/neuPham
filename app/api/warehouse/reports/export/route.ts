@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import onlinePrisma from "@/lib/onlinePrisma";
+
+
+import offlinePrisma from "@/lib/oflinePrisma";
+
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,8 +16,8 @@ export async function POST(req: NextRequest) {
     }
 
     // Find warehouse by code or id, ensuring it's not deleted.
-    // The model name is corrected to `Warehouses_online` to match the schema.
-    let warehouse = await onlinePrisma.warehouses_online.findFirst({
+    // The model name is corrected to `Warehouses` to match the schema.
+    let warehouse = await offlinePrisma.warehouses.findFirst({
       where: {
         OR: [
           { warehouseCode: warehouseId, isDeleted: false },
@@ -34,11 +37,11 @@ export async function POST(req: NextRequest) {
     let filename = '';
 
     if (reportType === 'inventory') {
-      // Corrected model name from `products_online` to `Product_online`.
-      // Corrected relation field from `warehousesId` to `warehouses_onlineId`.
-      const products = await onlinePrisma.product_online.findMany({
+      // Corrected model name from `products` to `Product`.
+      // Corrected relation field from `warehousesId` to `warehousesId`.
+      const products = await offlinePrisma.product.findMany({
         where: {
-          warehouses_onlineId: warehouse.warehouseCode,
+          warehousesId: warehouse.warehouseCode,
           isDeleted: false
         },
         orderBy: {
@@ -71,12 +74,12 @@ export async function POST(req: NextRequest) {
       const startDate = new Date(parseInt(year), parseInt(month) - 1, 1);
       const endDate = new Date(parseInt(year), parseInt(month), 0, 23, 59, 59);
 
-      // Corrected model name from `sale_online` to `Sale_online`.
-      // Corrected relation field from `warehousesId` to `warehouses_onlineId`.
-      // Corrected included relation names from `product` to `Product_online` and `selectedCustomer` to `Customer_online`.
-      const sales = await onlinePrisma.sale_online.findMany({
+      // Corrected model name from `sale` to `Sale`.
+      // Corrected relation field from `warehousesId` to `warehousesId`.
+      // Corrected included relation names from `product` to `Product` and `selectedCustomer` to `Customer`.
+      const sales = await offlinePrisma.consultation.findMany({
         where: {
-          warehouses_onlineId: warehouse.warehouseCode,
+          warehousesId: warehouse.warehouseCode,
           isDeleted: false,
           createdAt: {
             gte: startDate,
@@ -84,12 +87,12 @@ export async function POST(req: NextRequest) {
           }
         },
         include: {
-          saleItems: {
+          consultationItems: {
             include: {
-              Product_online: true // Corrected relation name
+              product: true // Corrected relation name
             }
           },
-          Customer_online: true // Corrected relation name
+          selectedStudent: true // Corrected relation name
         },
         orderBy: {
           createdAt: 'desc'
@@ -103,8 +106,8 @@ export async function POST(req: NextRequest) {
       sales.forEach((sale:any) => {
         const status = sale.balance === 0 ? 'Paid' : sale.balance === sale.grandTotal ? 'Unpaid' : 'Partial';
         const date = new Date(sale.createdAt).toLocaleDateString();
-        // Corrected property access from `selectedCustomer` to `Customer_online`.
-        const customer = sale.Customer_online?.name || 'Walk-in Customer';
+        // Corrected property access from `selectedCustomer` to `Customer`.
+        const customer = sale.Customer?.name || 'Walk-in Customer';
         
         csvData += `"${sale.invoiceNo}","${date}","${customer}",${sale.saleItems.length},${sale.grandTotal},${sale.balance},"${status}"\n`;
       });
@@ -124,9 +127,9 @@ export async function POST(req: NextRequest) {
       const endDate = new Date(parseInt(year), parseInt(month), 0, 23, 59, 59);
 
       // Get inventory data - Corrected model and field names
-      const products = await onlinePrisma.product_online.findMany({
+      const products = await offlinePrisma.product.findMany({
         where: {
-          warehouses_onlineId: warehouse.warehouseCode,
+          warehousesId: warehouse.warehouseCode,
           isDeleted: false
         },
         orderBy: {
@@ -135,9 +138,9 @@ export async function POST(req: NextRequest) {
       });
 
       // Get sales data - Corrected model, field, and include names
-      const sales = await onlinePrisma.sale_online.findMany({
+      const sales = await offlinePrisma.consultation.findMany({
         where: {
-          warehouses_onlineId: warehouse.warehouseCode,
+          warehousesId: warehouse.warehouseCode,
           isDeleted: false,
           createdAt: {
             gte: startDate,
@@ -145,12 +148,12 @@ export async function POST(req: NextRequest) {
           }
         },
         include: {
-          saleItems: {
+          consultationItems: {
             include: {
-              Product_online: true // Corrected relation name
+              product: true // Corrected relation name
             }
           },
-          Customer_online: true // Corrected relation name
+          selectedStudent: true // Corrected relation name
         },
         orderBy: {
           createdAt: 'desc'
@@ -193,9 +196,9 @@ export async function POST(req: NextRequest) {
         const status = sale.balance === 0 ? 'Paid' : sale.balance === sale.grandTotal ? 'Unpaid' : 'Partial';
         const date = new Date(sale.createdAt).toLocaleDateString();
         // Corrected property access
-        const customer = sale.Customer_online?.name || 'Walk-in Customer';
+        const customer = sale.selectedStudent?.name || 'Walk-in Customer';
         
-        csvData += `"${sale.invoiceNo}","${date}","${customer}",${sale.saleItems.length},${sale.grandTotal},${sale.balance},"${status}"\n`;
+        csvData += `"${sale.invoiceNo}","${date}","${customer}",${sale.consultationItems.length},${sale.grandTotal},${sale.balance},"${status}"\n`;
       });
 
       filename = `${warehouse.warehouseCode}_monthly_report_${year}_${month.toString().padStart(2, '0')}.csv`;
@@ -227,6 +230,6 @@ export async function POST(req: NextRequest) {
   } finally {
     // Disconnecting the Prisma client is generally not recommended in serverless environments
     // as it can affect performance by closing and reopening connections for each request.
-    // await onlinePrisma.$disconnect();
+    // await offlinePrisma.$disconnect();
   }
 }

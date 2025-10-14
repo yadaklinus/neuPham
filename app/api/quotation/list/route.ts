@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
                     warehousesId: warehouseId,
                 },
                 include: {
-                    selectedCustomer: {
+                    selectedStudent: {
                         select: {
                             id: true,
                             name: true,

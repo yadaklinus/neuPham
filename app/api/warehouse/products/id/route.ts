@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import onlinePrisma from "@/lib/onlinePrisma";
+
+
+import offlinePrisma from "@/lib/oflinePrisma";
+
 
 export async function POST(
   req: NextRequest,
@@ -17,8 +20,8 @@ export async function POST(
       )
     }
 
-    // FIX: Corrected model name from 'warehouses_online' to 'Warehouses_online'
-    const warehouse = await onlinePrisma.warehouses_online.findFirst({
+    // FIX: Corrected model name from 'warehouses' to 'Warehouses'
+    const warehouse = await offlinePrisma.warehouses.findFirst({
       where: {
         OR: [
           { warehouseCode: warehouseId, isDeleted: false },
@@ -34,11 +37,11 @@ export async function POST(
       );
     }
 
-    // FIX: Corrected model name from 'product_online' to 'Product_online'
-    const product = await onlinePrisma.product_online.findFirst({
+    // FIX: Corrected model name from 'product' to 'Product'
+    const product = await offlinePrisma.product.findFirst({
       where: {
         id: productId as string,
-        warehouses_onlineId: warehouse.warehouseCode,
+        warehousesId: warehouse.warehouseCode,
         isDeleted: false
       }
     });
@@ -50,49 +53,49 @@ export async function POST(
       );
     }
 
-    // FIX: Corrected model name from 'saleItem_online' to 'SaleItem_online'
-    const salesHistory = await onlinePrisma.saleItem_online.findMany({
+    // FIX: Corrected model name from 'saleItem' to 'SaleItem'
+    const salesHistory = await offlinePrisma.consultationItem.findMany({
       where: {
-        product_onlineId: productId,
-        Sale_online: {
-          warehouses_onlineId: warehouse.warehouseCode,
+        productId: productId,
+        consultation: {
+          warehousesId: warehouse.warehouseCode,
           isDeleted: false
         }
       },
       include: {
-        Sale_online: {
+        consultation: {
           include: {
-            Customer_online: true
+           selectedStudent: true
           }
         }
       },
       orderBy: {
-        Sale_online: {
+        consultation: {
           createdAt: 'desc'
         }
       },
       take: 50
     });
 
-    // FIX: Corrected model name from 'purchaseItem_online' to 'PurchaseItem_online'
-    // FIX: Corrected field name from 'productId' to 'product_onlineId'
-    const purchaseHistory = await onlinePrisma.purchaseItem_online.findMany({
+    // FIX: Corrected model name from 'purchaseItem' to 'PurchaseItem'
+    // FIX: Corrected field name from 'productId' to 'productId'
+    const purchaseHistory = await offlinePrisma.purchaseItem.findMany({
       where: {
-        product_onlineId: productId, // Corrected field
-        Purchase_online: {
-          warehouses_onlineId: warehouse.warehouseCode,
+        productId: productId, // Corrected field
+        Purchase: {
+          warehousesId: warehouse.warehouseCode,
           isDeleted: false
         }
       },
       include: {
-        Purchase_online: {
+        Purchase: {
           include: {
-            Supplier_online: true
+            Supplier: true
           }
         }
       },
       orderBy: {
-        Purchase_online: {
+        Purchase: {
           createdAt: 'desc'
         }
       },
@@ -120,8 +123,8 @@ export async function POST(
     }
 
     salesHistory.forEach(item => {
-        if (item.Sale_online?.createdAt) {
-            const saleDate = item.Sale_online.createdAt;
+        if (item.consultation?.createdAt) {
+            const saleDate = item.consultation.createdAt;
             const monthKey = `${saleDate.getFullYear()}-${(saleDate.getMonth() + 1).toString().padStart(2, '0')}`;
             if (monthlyDataMap.has(monthKey)) {
                 const current = monthlyDataMap.get(monthKey)!;
@@ -169,6 +172,6 @@ export async function POST(
     );
   } finally {
     // Manually disconnecting is not recommended in serverless environments
-    // await onlinePrisma.$disconnect();
+    // await offlinePrisma.$disconnect();
   }
 }

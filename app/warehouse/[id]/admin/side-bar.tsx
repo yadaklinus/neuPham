@@ -169,12 +169,7 @@ export function SupAdminAppSidebar({ ...props }: React.ComponentProps<typeof Sid
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
-          <SidebarMenuItem>
-           
-            <SidebarMenuButton>
-              <SystemStatus/>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
+          
         </SidebarMenu>
         <SidebarMenu>
           <SidebarMenuItem>
@@ -191,28 +186,7 @@ export function SupAdminAppSidebar({ ...props }: React.ComponentProps<typeof Sid
       </SidebarHeader>
       <SidebarContent>
         
-      <SidebarMenu>
-      <SidebarMenuItem>
-        <Popover open={open} onOpenChange={setOpen}>
-          <PopoverTrigger asChild>
-            <SidebarMenuButton
-              tooltip="Calculator"
-              className="hover:bg-blue-600 transition"
-            >
-              <Calculator className="mr-2 h-4 w-4" />
-              <span>Calculator</span>
-            </SidebarMenuButton>
-          </PopoverTrigger>
-          <PopoverContent
-            side="right"
-            align="start"
-            className="p-0 shadow-xl border rounded-2xl w-80"
-          >
-            <CalculatorCard />
-          </PopoverContent>
-        </Popover>
-      </SidebarMenuItem>
-    </SidebarMenu>
+      
         <NavSection title="Overview" items={[
                 {
                   title: "Dashboard",
@@ -235,11 +209,7 @@ export function SupAdminAppSidebar({ ...props }: React.ComponentProps<typeof Sid
           url: `${endpoint}/sales/consultations`,
           icon: Eye,
         },
-        {
-          title: "View Sales",
-          url: `${endpoint}/sales/list`,
-          icon: Receipt,
-        },
+        
       ],
     },
     {
@@ -321,7 +291,7 @@ export function SupAdminAppSidebar({ ...props }: React.ComponentProps<typeof Sid
                 ],
               },
             ]} />
-        <NavSection
+        {/* <NavSection
             title="System"
             items={[
               {
@@ -340,7 +310,7 @@ export function SupAdminAppSidebar({ ...props }: React.ComponentProps<typeof Sid
                 icon: Settings,
               },
             ].filter((item) => item.title !== "Notifications" && item.title !== "Settings")}
-          />
+          /> */}
 
         
 

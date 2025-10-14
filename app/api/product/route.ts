@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import offlinePrisma from "@/lib/oflinePrisma";
-import { markProductAsUnsynced } from "@/lib/sync-helpers";
 
 export async function GET(req:NextRequest){
     const warehouseId = await req.json()
@@ -34,8 +33,8 @@ export async function POST(req:NextRequest){
             data:{
                 name,
                 barcode,
-                wholeSalePrice:parseFloat(wholeSalePrice),
-                retailPrice:parseFloat(retailPrice),
+                wholeSalePrice:parseFloat(cost),
+                retailPrice:parseFloat(cost),
                 cost:parseFloat(cost),
                 taxRate:parseInt(taxRate),
                 unit,

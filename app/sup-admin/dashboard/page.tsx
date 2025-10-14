@@ -10,7 +10,7 @@ import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/s
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { Package, ShoppingCart, Users, DollarSign, Warehouse, TrendingUp, Eye, MapPin } from "lucide-react"
+import { Package, ShoppingCart, Users, Warehouse, TrendingUp, Eye, MapPin } from "lucide-react"
 import { DashboardCard } from "./components/DashboardCard"
 import { RecentSalesTable } from "./components/RecentSalesTable"
 import { UserTable } from "./components/UserTable"
@@ -25,11 +25,9 @@ interface DashboardStats {
   totalProducts: number
   totalSales: number
   totalCustomers: number
-  totalRevenue: number
   recentSales: Array<{
     id: string
     customer: any
-    amount: number
     date: string
     items: number
     products: string
@@ -44,13 +42,11 @@ interface WarehouseAnalytics {
   phoneNumber: string
   email: string
   analytics: {
-    totalSales: number
     totalOrders: number
     totalProducts: number
     totalUsers: number
     totalCustomers: number
     lowStockProducts: number
-    avgOrderValue: number
   }
 }
 
@@ -60,7 +56,6 @@ export default function DashboardPage() {
     warehouses: WarehouseAnalytics[]
     summary: {
       totalWarehouses: number
-      totalRevenue: number
       totalOrders: number
       totalProducts: number
       topPerformer: WarehouseAnalytics | null
@@ -136,7 +131,7 @@ export default function DashboardPage() {
         </header>
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
           {/* Stats Cards */}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
             <DashboardCard
               title="Total Users"
               value={stats?.totalUsers || 0}
@@ -167,13 +162,6 @@ export default function DashboardPage() {
               description="registered customers"
               icon={Users}
             />
-            <DashboardCard
-              title="Total Revenue"
-              value={`${(formatCurrency(stats?.totalRevenue || 0)).toLocaleString()}`}
-              description="all-time revenue"
-              icon={DollarSign}
-            />
-            
           </div>
 
           {/* Warehouse Analytics Section */}
@@ -188,7 +176,7 @@ export default function DashboardPage() {
                       Top Performing Warehouse
                     </CardTitle>
                     <CardDescription>
-                      Warehouse with highest sales revenue
+                      Warehouse with highest number of orders
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -210,17 +198,7 @@ export default function DashboardPage() {
                           </div>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-green-600">
-                          {formatCurrency(warehouseAnalytics.summary.topPerformer.analytics.totalSales)}
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          {warehouseAnalytics.summary.topPerformer.analytics.totalOrders} orders
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Avg: {formatCurrency(warehouseAnalytics.summary.topPerformer.analytics.avgOrderValue)}
-                        </p>
-                      </div>
+                      
                       <Button asChild size="sm">
                         <Link href={`/sup-admin/warehouses/${warehouseAnalytics.summary.topPerformer.warehouseCode}`}>
                           <Eye className="h-4 w-4 mr-2" />
@@ -237,7 +215,7 @@ export default function DashboardPage() {
                 <CardHeader>
                   <CardTitle>Warehouse Performance</CardTitle>
                   <CardDescription>
-                    Sales performance and analytics for all warehouses
+                    Performance and analytics for all warehouses
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -246,11 +224,10 @@ export default function DashboardPage() {
                       <TableRow>
                         <TableHead>Warehouse</TableHead>
                         <TableHead>Location</TableHead>
-                        <TableHead className="text-right">Total Sales</TableHead>
                         <TableHead className="text-right">Orders</TableHead>
                         <TableHead className="text-right">Products</TableHead>
                         <TableHead className="text-right">Users</TableHead>
-                        <TableHead className="text-right">Avg Order</TableHead>
+                        <TableHead className="text-right">Customers</TableHead>
                         <TableHead className="text-right">Stock Alerts</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
@@ -276,9 +253,6 @@ export default function DashboardPage() {
                               {warehouse.address.split(',')[0]}
                             </div>
                           </TableCell>
-                          <TableCell className="text-right font-medium">
-                            {formatCurrency(warehouse.analytics.totalSales)}
-                          </TableCell>
                           <TableCell className="text-right">
                             {warehouse.analytics.totalOrders}
                           </TableCell>
@@ -289,7 +263,7 @@ export default function DashboardPage() {
                             {warehouse.analytics.totalUsers}
                           </TableCell>
                           <TableCell className="text-right">
-                            {formatCurrency(warehouse.analytics.avgOrderValue)}
+                            {warehouse.analytics.totalCustomers}
                           </TableCell>
                           <TableCell className="text-right">
                             {warehouse.analytics.lowStockProducts > 0 ? (

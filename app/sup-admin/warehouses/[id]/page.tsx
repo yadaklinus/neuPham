@@ -289,10 +289,7 @@ export default function WarehouseDetailsPage() {
               <div>
                 <h1 className="text-2xl font-semibold text-blue-600">{warehouseData.name} Clinic Management System</h1>
                 <p className="text-muted-foreground font-mono">Clinic ID: {warehouseData.warehouseCode}</p>
-                <div className="bg-blue-50 p-3 rounded-lg mt-2">
-                  <p className="text-sm text-blue-800 font-medium">🏥 Comprehensive Drug Tracking & Anti-Theft System</p>
-                  <p className="text-xs text-blue-600">Monitoring all medicine dispensing to prevent theft and ensure patient safety</p>
-                </div>
+                
                 <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
                   <div className="flex items-center gap-1">
                     <MapPin className="h-4 w-4" />
@@ -584,7 +581,7 @@ export default function WarehouseDetailsPage() {
                 <SalesCalendar
                   warehouseId={wareHouseId}
                   onDateClick={handleDateClick}
-                  apiEndpoint="/api/sale/daily-analytics-online"
+                  apiEndpoint="/api/sale/daily-analytics"
                   className="w-full"
                 />
               </div>
@@ -1233,7 +1230,7 @@ export default function WarehouseDetailsPage() {
           date={selectedDate}
           warehouseId={wareHouseId}
           warehouseName={warehouseData?.name || "Warehouse"}
-          apiEndpoint="/api/sale/daily-analytics-online"
+          apiEndpoint="/api/sale/daily-analytics"
         />
      </>
   )

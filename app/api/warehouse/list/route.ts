@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import onlinePrisma from "@/lib/onlinePrisma";
-
+import offlinePrisma from "@/lib/oflinePrisma";
 
 export async function POST(
   req:NextRequest
@@ -11,7 +10,7 @@ export async function POST(
 
     // Try to find warehouse by warehouseCode first (as used in navigation)
     // If not found, try by id
-    let warehouse = await onlinePrisma.warehouses_online.findUnique({
+    let warehouse = await offlinePrisma.warehouses.findUnique({
       where: {
         warehouseCode: id,isDeleted:false
       },
@@ -29,7 +28,7 @@ export async function POST(
 
     // If not found by code, try by id
     if (!warehouse) {
-      warehouse = await onlinePrisma.warehouses_online.findUnique({
+      warehouse = await offlinePrisma.warehouses.findUnique({
         where: {
           id: id,isDeleted:false
         },
@@ -79,6 +78,6 @@ export async function POST(
       { status: 500 }
     );
   } finally {
-    await onlinePrisma.$disconnect();
+    await offlinePrisma.$disconnect();
   }
 }

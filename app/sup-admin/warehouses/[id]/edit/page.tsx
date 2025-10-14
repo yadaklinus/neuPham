@@ -173,15 +173,15 @@ export default function EditWarehousePage() {
 
       await axios.put("/api/warehouse",updatedWarehouse)
 
-      console.log("Updating warehouse:", updatedWarehouse)
+      console.log("Updating clinic:", updatedWarehouse)
 
       // Simulate API delay
       await new Promise((resolve) => setTimeout(resolve, 1000))
 
       setShowSuccessDialog(true)
     } catch (error) {
-      console.error("Error updating warehouse:", error)
-      alert("Error updating warehouse. Please try again.")
+      console.error("Error updating clinic:", error)
+      alert("Error updating clinic. Please try again.")
     } finally {
       setIsSubmitting(false)
     }
@@ -211,7 +211,7 @@ export default function EditWarehousePage() {
               <p className="text-muted-foreground mb-4">The requested warehouse could not be found.</p>
               <Button onClick={() => router.push("/sup-admin/warehouses/list")}>
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Warehouses
+                Back to clinic
               </Button>
             </div>
           </div>
@@ -237,7 +237,7 @@ export default function EditWarehousePage() {
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
-                  <BreadcrumbLink href="/sup-admin/warehouses/list">Warehouses</BreadcrumbLink>
+                  <BreadcrumbLink href="/sup-admin/warehouses/list">clinic</BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
@@ -257,7 +257,7 @@ export default function EditWarehousePage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Warehouse className="h-6 w-6 text-blue-600" />
-              <h1 className="text-3xl font-bold text-blue-600">Edit Warehouse</h1>
+              <h1 className="text-3xl font-bold text-blue-600">Edit clinic</h1>
               <Badge variant="outline">{warehouseData.warehouseCode}</Badge>
             </div>
             <Button variant="outline" onClick={() => router.push(`/sup-admin/warehouses/${wareHouseId}`)}>
@@ -288,12 +288,12 @@ export default function EditWarehousePage() {
               <Card>
                 <CardHeader>
                   <CardTitle>Basic Information</CardTitle>
-                  <CardDescription>Update warehouse basic details</CardDescription>
+                  <CardDescription>Update Clinic basic details</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="name">Warehouse Name *</Label>
+                      <Label htmlFor="name">Clinic Name *</Label>
                       <Input
                         id="name"
                         value={formData.name}
@@ -351,7 +351,7 @@ export default function EditWarehousePage() {
                     <MapPin className="h-5 w-5" />
                     Address Information
                   </CardTitle>
-                  <CardDescription>Update warehouse location details</CardDescription>
+                  <CardDescription>Update Clinic location details</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">

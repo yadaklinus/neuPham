@@ -3,11 +3,13 @@ import offlinePrisma from "@/lib/oflinePrisma";
 
 export async function GET(
     req: NextRequest,
-    { params }: { params: { studentId: string } }
+    context: { params: Promise<{ studentId: string }> }
 ) {
     try {
+        const {studentId} = await context.params
+
         const student = await offlinePrisma.student.findUnique({
-            where: { id: params.studentId, isDeleted: false }
+            where: { id: studentId, isDeleted: false }
         });
 
         if (!student) {
@@ -25,13 +27,16 @@ export async function GET(
 
 export async function PUT(
     req: NextRequest,
-    { params }: { params: { studentId: string } }
+    context: { params: Promise<{ studentId: string }> }
 ) {
+
     try {
+        const {studentId} = await context.params
+
         const { amount, description, saleId, warehouseId } = await req.json();
 
         const student = await offlinePrisma.student.findUnique({
-            where: { id: params.studentId, isDeleted: false }
+            where: { id: studentId, isDeleted: false }
         });
 
         if (!student) {
@@ -40,7 +45,7 @@ export async function PUT(
 
         // Update student balance
         const updatedStudent = await offlinePrisma.student.update({
-            where: { id: params.studentId },
+            where: { id: studentId },
             data: {
                 accountBalance: {
                     decrement: amount
@@ -54,7 +59,7 @@ export async function PUT(
         // Create balance transaction record
         await offlinePrisma.balanceTransaction.create({
             data: {
-                studentId: params.studentId,
+                studentId: studentId,
                 amount: amount,
                 type: "DEBIT",
                 description: description || "Consultation payment",

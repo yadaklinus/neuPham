@@ -169,7 +169,7 @@ export function SalesSidebar({ ...props }: React.ComponentProps<typeof Sidebar>)
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
-          <SystemStatus/>
+           
         </SidebarMenu>
         <SidebarMenu>
           <SidebarMenuItem>

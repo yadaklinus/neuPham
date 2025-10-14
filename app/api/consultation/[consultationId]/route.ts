@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import offlinePrisma from "@/lib/oflinePrisma";
 
+// Define a consistent type for your route context
 export async function GET(
     req: NextRequest,
-    context: { params: Promise<{ consultationId : string }> }
+    context: { params: Promise<{ consultationId: string }> }
 ) {
     try {
-        const { consultationId } = await context.params
+        // Removed 'await' since context.params is not a Promise
+        const  {consultationId}  = await context.params; 
+        
         const consultation = await offlinePrisma.consultation.findUnique({
             where: { 
                 invoiceNo: consultationId, 
@@ -46,15 +49,18 @@ export async function GET(
         return NextResponse.json(consultation, { status: 200 });
     } catch (error) {
         console.error("Consultation fetch error:", error);
-        return NextResponse.json(error, { status: 500 });
+        // Returning a generic error message is safer for production
+        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     } finally {
         await offlinePrisma.$disconnect();
     }
 }
 
+// PUT and DELETE handlers already use the correct, non-Promise type for params.
+
 export async function PUT(
     req: NextRequest,
-    { params }: { params: { consultationId: string } }
+    context: { params: Promise<{ consultationId: string }> }
 ) {
     try {
         const {
@@ -64,8 +70,10 @@ export async function PUT(
             notes
         } = await req.json();
 
+        const {consultationId} = await context.params
+
         const existingConsultation = await offlinePrisma.consultation.findUnique({
-            where: { invoiceNo: params.consultationId, isDeleted: false }
+            where: { invoiceNo: consultationId, isDeleted: false }
         });
 
         if (!existingConsultation) {
@@ -73,7 +81,7 @@ export async function PUT(
         }
 
         const updatedConsultation = await offlinePrisma.consultation.update({
-            where: { invoiceNo: params.consultationId },
+            where: { invoiceNo: consultationId },
             data: {
                 diagnosis,
                 symptoms,
@@ -90,7 +98,7 @@ export async function PUT(
         }, { status: 200 });
     } catch (error) {
         console.error("Consultation update error:", error);
-        return NextResponse.json(error, { status: 500 });
+        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     } finally {
         await offlinePrisma.$disconnect();
     }
@@ -98,11 +106,14 @@ export async function PUT(
 
 export async function DELETE(
     req: NextRequest,
-    { params }: { params: { consultationId: string } }
+    context: { params: Promise<{ consultationId: string }> }
+   
 ) {
+    const {consultationId} = await context.params
+
     try {
         const consultation = await offlinePrisma.consultation.findUnique({
-            where: { invoiceNo: params.consultationId }
+            where: { invoiceNo: consultationId }
         });
 
         if (!consultation) {
@@ -111,7 +122,7 @@ export async function DELETE(
 
         // Soft delete the consultation
         await offlinePrisma.consultation.update({
-            where: { invoiceNo: params.consultationId },
+            where: { invoiceNo: consultationId },
             data: {
                 isDeleted: true,
                 sync: false,
@@ -124,7 +135,7 @@ export async function DELETE(
         }, { status: 200 });
     } catch (error) {
         console.error("Consultation deletion error:", error);
-        return NextResponse.json(error, { status: 500 });
+        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     } finally {
         await offlinePrisma.$disconnect();
     }

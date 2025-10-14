@@ -1,4 +1,4 @@
-import { PrismaClient } from "@/prisma/generated/online";
+import { PrismaClient } from "@/prisma/generated/offline";
 import { NextRequest, NextResponse } from "next/server";
 
 const prisma = new PrismaClient()
@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Verify warehouse exists
-    const warehouse = await prisma.warehouses_online.findUnique({
+    const warehouse = await prisma.warehouses.findUnique({
       where: { warehouseCode: warehouseId, isDeleted: false }
     });
 
@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
 
     // Get suspicious activities with pagination
     const [suspiciousActivities, totalCount] = await Promise.all([
-      prisma.suspiciousActivity_online.findMany({
+      prisma.suspiciousActivity.findMany({
         where: whereClause,
         include: {
           staff: {
@@ -64,7 +64,7 @@ export async function GET(req: NextRequest) {
         skip,
         take: limit
       }),
-      prisma.suspiciousActivity_online.count({
+      prisma.suspiciousActivity.count({
         where: whereClause
       })
     ]);
@@ -79,9 +79,9 @@ export async function GET(req: NextRequest) {
         COALESCE(SUM(CASE WHEN st.action = 'received' THEN st.quantity ELSE 0 END), 0) as total_received,
         COALESCE(SUM(CASE WHEN st.action = 'dispensed' THEN st.quantity ELSE 0 END), 0) as total_dispensed,
         COALESCE(SUM(CASE WHEN st.action = 'adjusted' THEN st.quantity ELSE 0 END), 0) as total_adjusted
-      FROM "Product_online" p
-      LEFT JOIN "StockTracking_online" st ON p.id = st."productId"
-      WHERE p."warehouses_onlineId" = ${warehouse.id} AND p."isDeleted" = false
+      FROM "Product" p
+      LEFT JOIN "StockTracking" st ON p.id = st."productId"
+      WHERE p."warehousesId" = ${warehouse.id} AND p."isDeleted" = false
       GROUP BY p.id, p.name, p.barcode, p.quantity
       HAVING p.quantity != (
         COALESCE(SUM(CASE WHEN st.action = 'received' THEN st.quantity ELSE 0 END), 0) -
@@ -97,7 +97,7 @@ export async function GET(req: NextRequest) {
     `;
 
     // Get high-risk staff (staff with multiple suspicious activities)
-    const highRiskStaff = await prisma.suspiciousActivity_online.groupBy({
+    const highRiskStaff = await prisma.suspiciousActivity.groupBy({
       by: ['staffId'],
       where: {
         warehouseId: warehouse.id,
@@ -123,7 +123,7 @@ export async function GET(req: NextRequest) {
     });
 
     // Get staff details for high-risk staff
-    const staffDetails = await prisma.users_online.findMany({
+    const staffDetails = await prisma.users.findMany({
       where: {
         id: {
           in: highRiskStaff.map(staff => staff.staffId).filter(Boolean)
@@ -140,13 +140,13 @@ export async function GET(req: NextRequest) {
     // Calculate security metrics
     const securityMetrics = {
       totalSuspiciousActivities: totalCount,
-      highSeverityCount: await prisma.suspiciousActivity_online.count({
+      highSeverityCount: await prisma.suspiciousActivity.count({
         where: { ...whereClause, severity: 'high' }
       }),
-      mediumSeverityCount: await prisma.suspiciousActivity_online.count({
+      mediumSeverityCount: await prisma.suspiciousActivity.count({
         where: { ...whereClause, severity: 'medium' }
       }),
-      lowSeverityCount: await prisma.suspiciousActivity_online.count({
+      lowSeverityCount: await prisma.suspiciousActivity.count({
         where: { ...whereClause, severity: 'low' }
       }),
       stockDiscrepanciesCount: Array.isArray(stockDiscrepancies) ? stockDiscrepancies.length : 0,
@@ -190,7 +190,7 @@ export async function POST(req: NextRequest) {
     } = await req.json();
 
     // Verify warehouse exists
-    const warehouse = await prisma.warehouses_online.findUnique({
+    const warehouse = await prisma.warehouses.findUnique({
       where: { warehouseCode: warehouseId, isDeleted: false }
     });
 
@@ -202,7 +202,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Create suspicious activity record
-    const suspiciousActivity = await prisma.suspiciousActivity_online.create({
+    const suspiciousActivity = await prisma.suspiciousActivity.create({
       data: {
         staffId,
         productId,
@@ -243,7 +243,7 @@ export async function PUT(req: NextRequest) {
   try {
     const { activityId, resolution, resolvedBy } = await req.json();
 
-    const updatedActivity = await prisma.suspiciousActivity_online.update({
+    const updatedActivity = await prisma.suspiciousActivity.update({
       where: { id: activityId },
       data: {
         resolved: true,

@@ -1,4 +1,4 @@
-import { PrismaClient } from "@/prisma/generated/online";
+import { PrismaClient } from "@/prisma/generated/offline";
 import { NextRequest, NextResponse } from "next/server";
 import * as XLSX from 'xlsx';
 
@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
     } = await req.json()
 
     // Verify warehouse exists
-    const warehouse = await prisma.warehouses_online.findUnique({
+    const warehouse = await prisma.warehouses.findUnique({
       where: { warehouseCode: warehouseId, isDeleted: false }
     });
 
@@ -35,9 +35,9 @@ export async function POST(req: NextRequest) {
 
     switch (reportType) {
       case 'consultations':
-        const consultations = await prisma.sale_online.findMany({
+        const consultations = await prisma.consultation.findMany({
           where: {
-            warehouses_onlineId: warehouseId,
+            warehousesId: warehouseId,
             isDeleted: false,
             createdAt: {
               gte: fromDate,
@@ -45,10 +45,10 @@ export async function POST(req: NextRequest) {
             }
           },
           include: {
-            Customer_online: true,
-            saleItems: {
+            selectedStudent: true,
+            consultationItems: {
               include: {
-                Product_online: true
+                product: true
               }
             },
             paymentMethod: true
@@ -65,12 +65,12 @@ export async function POST(req: NextRequest) {
         reportData = consultations.map(consultation => ({
           'Consultation ID': consultation.invoiceNo,
           'Date': consultation.createdAt.toLocaleDateString(),
-          'Student Name': consultation.Customer_online?.name || 'Walk-in Patient',
-          'Matric Number': consultation.Customer_online?.matricNumber || 'N/A',
+          'Student Name': consultation.selectedStudent?.name || 'Walk-in Patient',
+          'Matric Number': consultation.selectedStudent?.matricNumber || 'N/A',
           'Diagnosis': consultation.diagnosis || 'General Consultation',
           'Symptoms': consultation.symptoms || 'N/A',
-          'Treatment': consultation.treatment || 'N/A',
-          'Medicines Prescribed': consultation.saleItems.length,
+          'Treatment': consultation|| 'N/A',
+          'Medicines Prescribed': consultation.consultationItems.length,
           'Total Amount': consultation.grandTotal,
           'Amount Paid': consultation.paidAmount,
           'Balance': consultation.balance,
@@ -82,20 +82,13 @@ export async function POST(req: NextRequest) {
         break;
 
       case 'medicines':
-        const medicines = await prisma.product_online.findMany({
+        const medicines = await prisma.product.findMany({
           where: {
-            warehouses_onlineId: warehouseId,
+            warehousesId: warehouseId,
             isDeleted: false
           },
           include: {
-            saleItems: {
-              where: {
-                createdAt: {
-                  gte: fromDate,
-                  lte: toDate
-                }
-              }
-            }
+            consultationItem: true
           }
         });
 
@@ -106,8 +99,8 @@ export async function POST(req: NextRequest) {
         ];
 
         reportData = medicines.map(medicine => {
-          const totalDispensed = medicine.saleItems.reduce((sum, item) => sum + item.quantity, 0);
-          const revenue = medicine.saleItems.reduce((sum, item) => sum + item.total, 0);
+          const totalDispensed = medicine.consultationItem.reduce((sum, item) => sum + item.quantity, 0);
+          const revenue = medicine.consultationItem.reduce((sum, item) => sum + item.total, 0);
           const stockStatus = medicine.quantity <= 5 ? 'Critical' : medicine.quantity <= 10 ? 'Low' : 'Good';
 
           return {
@@ -120,8 +113,8 @@ export async function POST(req: NextRequest) {
             'Total Dispensed': totalDispensed,
             'Revenue Generated': revenue,
             'Stock Status': stockStatus,
-            'Last Dispensed': medicine.lastDispensed ? new Date(medicine.lastDispensed).toLocaleDateString() : 'Never',
-            'Reorder Level': medicine.reorderLevel || 10
+            //'Last Dispensed': medicine.lastDispensed ? new Date(medicine.lastDispensed).toLocaleDateString() : 'Never',
+            //'Reorder Level': medicine.reorderLevel || 10
           };
         });
 
@@ -129,13 +122,13 @@ export async function POST(req: NextRequest) {
         break;
 
       case 'students':
-        const students = await prisma.customer_online.findMany({
+        const students = await prisma.student.findMany({
           where: {
-            warehouses_onlineId: warehouseId,
+            warehousesId: warehouseId,
             isDeleted: false
           },
           include: {
-            sales: {
+            Consultation: {
               where: {
                 createdAt: {
                   gte: fromDate,
@@ -153,10 +146,10 @@ export async function POST(req: NextRequest) {
         ];
 
         reportData = students.map(student => {
-          const totalConsultations = student.sales?.length || 0;
-          const totalSpent = student.sales?.reduce((sum, sale) => sum + sale.grandTotal, 0) || 0;
-          const lastVisit = student.sales?.length > 0 
-            ? new Date(Math.max(...student.sales.map(s => new Date(s.createdAt).getTime()))).toLocaleDateString()
+          const totalConsultations = student.Consultation?.length || 0;
+          const totalSpent = student.Consultation?.reduce((sum, sale) => sum + sale.grandTotal, 0) || 0;
+          const lastVisit = student.Consultation?.length > 0 
+            ? new Date(Math.max(...student.Consultation.map(s => new Date(s.createdAt).getTime()))).toLocaleDateString()
             : 'Never';
 
           return {
@@ -178,7 +171,7 @@ export async function POST(req: NextRequest) {
         break;
 
       case 'drug_tracking':
-        const trackingRecords = await prisma.stockTracking_online.findMany({
+        const trackingRecords = await prisma.stockTracking.findMany({
           where: {
             warehouse: {
               warehouseCode: warehouseId
@@ -213,9 +206,9 @@ export async function POST(req: NextRequest) {
           'Staff Role': record.staff?.role || 'N/A',
           'Patient Name': record.patient?.name || 'N/A',
           'Reason': record.reason,
-          'Dosage': record.dosage || 'N/A',
-          'Frequency': record.frequency || 'N/A',
-          'IP Address': record.ipAddress || 'N/A'
+          'Dosage':  'N/A',
+          'Frequency':  'N/A',
+          'IP Address': 'N/A'
         }));
 
         filename = `drug_tracking_${warehouse.name}_${fromDate.toISOString().split('T')[0]}_to_${toDate.toISOString().split('T')[0]}`;
@@ -223,7 +216,7 @@ export async function POST(req: NextRequest) {
 
       case 'security_audit':
         const [suspiciousActivities, stockDiscrepancies] = await Promise.all([
-          prisma.suspiciousActivity_online.findMany({
+          prisma.suspiciousActivity.findMany({
             where: {
               warehouseId: warehouse.id,
               timestamp: {
@@ -255,7 +248,7 @@ export async function POST(req: NextRequest) {
           'Status': activity.resolved ? 'Resolved' : 'Open',
           'Resolved By': activity.resolvedBy || 'N/A',
           'Resolution Date': activity.resolvedAt ? new Date(activity.resolvedAt).toLocaleDateString() : 'N/A',
-          'IP Address': activity.ipAddress || 'N/A'
+          'IP Address': 'N/A'
         }));
 
         filename = `security_audit_${warehouse.name}_${fromDate.toISOString().split('T')[0]}_to_${toDate.toISOString().split('T')[0]}`;

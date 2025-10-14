@@ -1,4 +1,4 @@
-import { PrismaClient } from "@/prisma/generated/online";
+import { PrismaClient } from "@/prisma/generated/offline";
 import { NextRequest, NextResponse } from "next/server";
 
 const prisma = new PrismaClient()
@@ -6,7 +6,7 @@ const prisma = new PrismaClient()
 export async function GET() {
   try {
     // Get all warehouses with their sales data
-    const warehouses = await prisma.warehouses_online.findMany({
+    const warehouses = await prisma.warehouses.findMany({
       where: { isDeleted: false },
       include: {
         consultation: {
@@ -115,7 +115,7 @@ export async function POST(req: NextRequest) {
     const { warehouseId } = await req.json();
 
     // Get detailed analytics for a specific warehouse
-    const warehouse = await prisma.warehouses_online.findUnique({
+    const warehouse = await prisma.warehouses.findUnique({
       where: { 
         warehouseCode: warehouseId,
         isDeleted: false 

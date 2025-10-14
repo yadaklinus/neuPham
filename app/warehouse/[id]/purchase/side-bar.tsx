@@ -170,7 +170,7 @@ export function PurchaseSidebar({ ...props }: React.ComponentProps<typeof Sideba
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SystemStatus/>
+             
           </SidebarMenuItem>
         </SidebarMenu>
         <SidebarMenu>

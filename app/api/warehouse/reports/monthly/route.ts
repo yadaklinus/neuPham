@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import onlinePrisma from "@/lib/onlinePrisma"; // Assuming this correctly initializes your Prisma client
+
+import offlinePrisma from "@/lib/oflinePrisma";
+// Assuming this correctly initializes your Prisma client
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,7 +15,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Find warehouse by its unique code or ID
-    const warehouse = await onlinePrisma.warehouses_online.findFirst({
+    const warehouse = await offlinePrisma.warehouses.findFirst({
       where: {
         OR: [
           { warehouseCode: warehouseId, isDeleted: false },
@@ -48,11 +50,11 @@ export async function POST(req: NextRequest) {
 
     // --- Get inventory data ---
     if (reportType === "all" || reportType === "inventory") {
-      // FIX: Correct model name from 'products_online' to 'Product_online'
-      // FIX: Correct field name from 'warehousesId' to 'warehouses_onlineId'
-      const products = await onlinePrisma.product_online.findMany({
+      // FIX: Correct model name from 'products' to 'Product'
+      // FIX: Correct field name from 'warehousesId' to 'warehousesId'
+      const products = await offlinePrisma.product.findMany({
         where: {
-          warehouses_onlineId: warehouse.warehouseCode,
+          warehousesId: warehouse.warehouseCode,
           isDeleted: false,
         },
         orderBy: {
@@ -92,12 +94,12 @@ export async function POST(req: NextRequest) {
 
     // --- Get sales data ---
     if (reportType === "all" || reportType === "sales") {
-      // FIX: Correct model name from 'sale_online' to 'Sale_online'
-      // FIX: Correct field name from 'warehousesId' to 'warehouses_onlineId'
-      // FIX: Correct relation names from 'product' to 'Product_online' and 'selectedCustomer' to 'Customer_online'
-      const sales = await onlinePrisma.sale_online.findMany({
+      // FIX: Correct model name from 'sale' to 'Sale'
+      // FIX: Correct field name from 'warehousesId' to 'warehousesId'
+      // FIX: Correct relation names from 'product' to 'Product' and 'selectedCustomer' to 'Customer'
+      const sales = await offlinePrisma.consultation.findMany({
         where: {
-          warehouses_onlineId: warehouse.warehouseCode,
+          warehousesId: warehouse.warehouseCode,
           isDeleted: false,
           createdAt: {
             gte: startDate,
@@ -105,12 +107,12 @@ export async function POST(req: NextRequest) {
           },
         },
         include: {
-          saleItems: {
+          consultationItems: {
             include: {
-              Product_online: true, // Corrected relation name
+              product: true, // Corrected relation name
             },
           },
-          Customer_online: true, // Corrected relation name
+          selectedStudent: true, // Corrected relation name
         },
         orderBy: {
           createdAt: "desc",
@@ -123,7 +125,7 @@ export async function POST(req: NextRequest) {
         totalItemsSold: sales.reduce(
           (sum, s) =>
             sum +
-            s.saleItems.reduce((itemSum, item) => itemSum + (item.quantity || 0), 0),
+            s.consultationItems.reduce((itemSum, item) => itemSum + (item.quantity || 0), 0),
           0
         ),
         averageOrderValue:
@@ -136,9 +138,9 @@ export async function POST(req: NextRequest) {
           id: s.id,
           invoiceNo: s.invoiceNo,
           date: s.createdAt,
-          // FIX: Use corrected relation name 'Customer_online'
-          customer: s.Customer_online?.name || "Walk-in Customer",
-          items: s.saleItems.length,
+          // FIX: Use corrected relation name 'Customer'
+          customer: s.selectedStudent?.name || "Walk-in Customer",
+          items: s.consultationItems.length,
           total: s.grandTotal,
           balance: s.balance,
           status:
@@ -170,23 +172,23 @@ export async function POST(req: NextRequest) {
 
 
       // --- Get top selling products ---
-      // FIX: Correct model name from 'saleItems_online' to 'SaleItem_online'
-      // FIX: Correct relation name from 'sale' to 'Sale_online'
-      // FIX: Correct field name from 'productId' to 'product_onlineId'
-      // FIX: Correct field name in where clause to 'warehouses_onlineId'
+      // FIX: Correct model name from 'saleItems' to 'SaleItem'
+      // FIX: Correct relation name from 'sale' to 'Sale'
+      // FIX: Correct field name from 'productId' to 'productId'
+      // FIX: Correct field name in where clause to 'warehousesId'
       // FIX: Sum 'total' for revenue instead of 'price'
-      const topProducts = await onlinePrisma.saleItem_online.groupBy({
-        by: ["product_onlineId"],
+      const topProducts = await offlinePrisma.consultationItem.groupBy({
+        by: ["productId"],
         where: {
-          Sale_online: {
-            warehouses_onlineId: warehouse.warehouseCode,
+          consultation: {
+            warehousesId: warehouse.warehouseCode,
             isDeleted: false,
             createdAt: {
               gte: startDate,
               lte: endDate,
             },
           },
-          product_onlineId: {
+          productId: {
             not: null // Ensure we don't group null product IDs
           }
         },
@@ -203,13 +205,13 @@ export async function POST(req: NextRequest) {
       });
 
       const topProductsWithDetails = await Promise.all(
-        topProducts.map(async (item) => {
-          // FIX: Use correct model name 'Product_online'
-          const product = await onlinePrisma.product_online.findUnique({
-            where: { id: item.product_onlineId! }, // item.product_onlineId is what we grouped by
+        topProducts.map(async (item:any) => {
+          // FIX: Use correct model name 'Product'
+          const product = await offlinePrisma.product.findUnique({
+            where: { id: item.productId! }, // item.productId is what we grouped by
           });
           return {
-            productId: item.product_onlineId,
+            productId: item.productId,
             productName: product?.name || "Unknown Product",
             quantity: item._sum.quantity || 0,
             revenue: item._sum.total || 0, // LOGIC FIX: Revenue is the sum of totals
@@ -230,6 +232,6 @@ export async function POST(req: NextRequest) {
   } finally {
     // It's generally not recommended to manually disconnect in serverless environments
     // like Next.js API routes, as it can affect connection pooling.
-    // await onlinePrisma.$disconnect();
+    // await offlinePrisma.$disconnect();
   }
 }

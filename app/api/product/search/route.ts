@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
         const whereCondition = {
             warehousesId,
             isDeleted: false,
-            ...searchConditions
+            
         };
 
         // Get products with pagination

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import onlinePrisma from "@/lib/onlinePrisma";
+import offlinePrisma from "@/lib/oflinePrisma";
 
 export async function GET() {
   try {
@@ -13,12 +13,12 @@ export async function GET() {
       totalCustomers,
       recentSales
     ] = await Promise.all([
-      onlinePrisma.users_online.count({where:{isDeleted:false}}),
-      onlinePrisma.warehouses_online.count({where:{isDeleted:false}}),
-      onlinePrisma.product_online.count({where:{isDeleted:false}}),
-      onlinePrisma.consultation_online.count({where:{isDeleted:false}}),
-      onlinePrisma.student_online.count({where:{isDeleted:false}}),
-      onlinePrisma.consultation_online.findMany({
+      offlinePrisma.users.count({where:{isDeleted:false}}),
+      offlinePrisma.warehouses.count({where:{isDeleted:false}}),
+      offlinePrisma.product.count({where:{isDeleted:false}}),
+      offlinePrisma.consultation.count({where:{isDeleted:false}}),
+      offlinePrisma.student.count({where:{isDeleted:false}}),
+      offlinePrisma.consultation.findMany({
         where:{isDeleted:false},
         take: 5,
         orderBy: { createdAt: 'desc' },
@@ -34,7 +34,7 @@ export async function GET() {
     ])
 
     // Calculate total sales amount
-    const totalSalesAmount = await onlinePrisma.consultation_online.aggregate({
+    const totalSalesAmount = await offlinePrisma.consultation.aggregate({
       where:{isDeleted:false},
       _sum: {
         grandTotal: true
@@ -53,7 +53,7 @@ export async function GET() {
       totalRevenue,
       recentSales: recentSales.map((sale:any) => ({
         id: sale.invoiceNo,
-        customer: sale?.Customer_online,
+        customer: sale?.Customer,
         amount: sale?.grandTotal,
         date: sale.createdAt.toISOString(),
         items: sale?.saleItems?.length,

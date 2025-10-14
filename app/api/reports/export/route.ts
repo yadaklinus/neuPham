@@ -154,11 +154,11 @@ async function generateSalesReport(warehouseId: string, dateRange: any, filters:
     };
   }
 
-  const sales = await offlinePrisma.sale.findMany({
+  const sales = await offlinePrisma.consultation.findMany({
     where: whereConditions,
     include: {
-      selectedCustomer: true,
-      saleItems: true
+      selectedStudent: true,
+      consultationItems: true
     },
     orderBy: { createdAt: 'desc' }
   });
@@ -166,8 +166,8 @@ async function generateSalesReport(warehouseId: string, dateRange: any, filters:
   return sales.map(sale => ({
     invoiceNo: sale.invoiceNo,
     date: sale.createdAt.toISOString().split('T')[0],
-    customer: sale.selectedCustomer?.name || 'Walk-in Customer',
-    itemsCount: sale.saleItems?.length || 0,
+    customer: sale.selectedStudent?.name || 'Walk-in Customer',
+    itemsCount: sale.consultationItems?.length || 0,
     subtotal: sale.subTotal,
     taxRate: sale.taxRate,
     grandTotal: sale.grandTotal,
@@ -214,13 +214,13 @@ async function generatePurchasesReport(warehouseId: string, dateRange: any, filt
 }
 
 async function generateCustomersReport(warehouseId: string, filters: any) {
-  const customers = await offlinePrisma.customer.findMany({
+  const customers = await offlinePrisma.student.findMany({
     where: {
       isDeleted: false,
       warehousesId: warehouseId
     },
     include: {
-      Sale: {
+      Consultation: {
         where: { isDeleted: false }
       }
     },
@@ -228,16 +228,16 @@ async function generateCustomersReport(warehouseId: string, filters: any) {
   });
 
   return customers.map(customer => {
-    const totalOrders = customer.Sale.length;
-    const totalSpent = customer.Sale.reduce((sum, sale) => sum + sale.grandTotal, 0);
-    const lastOrderDate = customer.Sale.length > 0 
-      ? Math.max(...customer.Sale.map(sale => new Date(sale.createdAt).getTime()))
+    const totalOrders = customer.Consultation.length;
+    const totalSpent = customer.Consultation.reduce((sum, sale) => sum + sale.grandTotal, 0);
+    const lastOrderDate = customer.Consultation.length > 0 
+      ? Math.max(...customer.Consultation.map(sale => new Date(sale.createdAt).getTime()))
       : null;
 
     return {
       name: customer.name,
-      type: customer.type,
-      company: customer.companyName || '',
+      type: customer.allergies,
+      company: customer.department || '',
       email: customer.email || '',
       phone: customer.phone,
       address: customer.address || '',

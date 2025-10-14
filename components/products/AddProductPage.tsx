@@ -158,7 +158,7 @@ export default function AddProductPage() {
                       <Input value={costPrice} onChange={(e)=>setCostPrice(e.target.value)} id="cost-price" type="number" placeholder="0.00" />
                     </div>
 
-                    <div className="space-y-2">
+                    {/* <div className="space-y-2">
                       <Label htmlFor="selling-price">WholeSale Selling Price *</Label>
                       <Input value={wholeSalePrice} onChange={(e)=>setWholeSalePrice(e.target.value)}  id="selling-price" type="number" placeholder="0.00" />
                     </div>
@@ -166,7 +166,7 @@ export default function AddProductPage() {
                     <div className="space-y-2">
                       <Label htmlFor="selling-price">Retail Selling Price *</Label>
                       <Input  value={retailPrice} onChange={(e)=>setRetailPrice(e.target.value)}  id="selling-price" type="number" placeholder="0.00" />
-                    </div>
+                    </div> */}
                   </div>
 
                   <div className="grid gap-4 md:grid-cols-2">
@@ -224,9 +224,8 @@ export default function AddProductPage() {
               
               !productQuantity || 
               !productTaxRate || 
-              !productUnit || 
-              !wholeSalePrice || 
-              !retailPrice
+              !productUnit 
+              
             } type="submit">Save Product</Button>
           </div>
           </form>

@@ -152,7 +152,7 @@ export default function DashboardPage() {
               </BreadcrumbList>
             </Breadcrumb>
           </div>
-          <SystemStatus/>
+           
         </header>
         <div className="flex flex-1 items-center justify-center">
           <div className="flex items-center gap-2">
@@ -179,7 +179,7 @@ export default function DashboardPage() {
               </BreadcrumbList>
             </Breadcrumb>
           </div>
-          <SystemStatus/>
+           
         </header>
         <div className="flex flex-1 items-center justify-center">
           <Card className="w-96">
@@ -211,7 +211,7 @@ export default function DashboardPage() {
               </BreadcrumbList>
             </Breadcrumb>
           </div>
-          <SystemStatus/>
+           
         </header>
 
        
@@ -375,84 +375,7 @@ export default function DashboardPage() {
           )}
 
           {/* Distribution Charts */}
-          <div className="grid gap-6 lg:grid-cols-2">
-            {/* Student Departments */}
-            {dashboardData.studentDepartments.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <PieChartIcon className="h-5 w-5" />
-                    Student Department Distribution
-                  </CardTitle>
-                  <CardDescription>Breakdown by student department</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-center">
-                    <ResponsiveContainer width="100%" height={250}>
-                      <PieChart>
-                        <Pie
-                          data={dashboardData.studentDepartments}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={60}
-                          outerRadius={100}
-                          paddingAngle={5}
-                          dataKey="value"
-                        >
-                          {dashboardData.studentDepartments.map((entry:any, index:any) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Pie>
-                        <Tooltip />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-                  <div className="flex justify-center gap-4 mt-4">
-                    {dashboardData.studentDepartments.map((item:any, index:any) => (
-                      <div key={index} className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
-                        <span className="text-sm">
-                          {item.name}: {item.value}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* User Roles */}
-            {dashboardData.userRoles.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Users className="h-5 w-5" />
-                    User Roles Distribution
-                  </CardTitle>
-                  <CardDescription>System users by role</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {dashboardData.userRoles.map((role:any, index:any) => (
-                      <div key={index} className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: role.color }} />
-                          <span className="text-sm font-medium capitalize">{role.name}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Progress 
-                            value={dashboardData.metrics.totalUsers > 0 ? (role.value / dashboardData.metrics.totalUsers) * 100 : 0} 
-                            className="w-20 h-2" 
-                          />
-                          <span className="text-sm text-muted-foreground">{role.value}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
+         
 
           {/* Daily Sales Calendar */}
           <div className="grid gap-6">

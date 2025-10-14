@@ -1,7 +1,6 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import offlinePrisma from "@/lib/oflinePrisma";
-import { markRelatedRecordsAsUnsynced } from "@/lib/sync-helpers";
 
 export async function GET(req: NextRequest) {
     try {
@@ -109,15 +108,7 @@ export async function POST(req: NextRequest) {
         }
 
         // Use the sync helper to mark all related records as unsynced
-        await markRelatedRecordsAsUnsynced({
-            type: 'purchase',
-            entityId: purchase.referenceNo,
-            relatedIds: {
-                productIds,
-                supplierId,
-                purchaseItemIds
-            }
-        });
+        
 
         //console.log(`Purchase created: ${purchase.referenceNo} with ${items.length} items - all related records marked as unsynced`);
 

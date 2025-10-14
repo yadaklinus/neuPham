@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
                     where: { isDeleted: false },
                     include: { product: true }
                 },
-                selectedCustomer: true
+                selectedStudent: true
             }
         })
 
@@ -42,9 +42,9 @@ export async function POST(req: NextRequest) {
         let finalBalance = balance || 0
         let finalAmountPaid = amountPaid || 0
 
-        if (useCustomerBalance && quotation.selectedCustomer) {
-            const customer = await offlinePrisma.customer.findUnique({
-                where: { id: quotation.selectedCustomerId!, isDeleted: false },
+        if (useCustomerBalance && quotation.selectedStudent) {
+            const customer = await offlinePrisma.student.findUnique({
+                where: { id: quotation.selectedStudentId!, isDeleted: false },
                 select: { accountBalance: true }
             })
             
@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
         // Use transaction to ensure data consistency
         const result = await offlinePrisma.$transaction(async (tx) => {
             // Create sale from quotation
-            const sale = await tx.sale.create({
+            const sale = await tx.consultation.create({
                 data: {
                     invoiceNo: finalInvoiceNo,
                     subTotal: quotation.subTotal,
@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
                     paidAmount: quotation.grandTotal - finalBalance,
                     balance: finalBalance,
                     warehousesId: quotation.warehousesId,
-                    selectedCustomerId: quotation.selectedCustomerId
+                    selectedStudentId: quotation.selectedStudentId
                 }
             })
 
@@ -92,10 +92,10 @@ export async function POST(req: NextRequest) {
                 total: item.total,
                 profit: (item.selectedPrice - item.cost) * item.quantity,
                 warehousesId: item.warehousesId,
-                customerId: quotation.selectedCustomerId
+                customerId: quotation.selectedStudentId
             }))
 
-            await tx.saleItem.createMany({
+            await tx.consultationItem.createMany({
                 data: saleItems
             })
 
@@ -116,7 +116,7 @@ export async function POST(req: NextRequest) {
             // Create payment methods if provided
             if (paymentMethods && paymentMethods.length > 0) {
                 const paymentData = paymentMethods.map((method: any) => ({
-                    saleId: sale.invoiceNo,
+                    saleId: sale.id,
                     method: method.method,
                     amount: method.amount,
                     warehousesId: quotation.warehousesId
@@ -128,10 +128,10 @@ export async function POST(req: NextRequest) {
             }
 
             // Deduct customer balance if used
-            if (balanceUsed > 0 && quotation.selectedCustomer) {
+            if (balanceUsed > 0 && quotation.selectedStudent) {
                 // Update customer balance
-                await tx.customer.update({
-                    where: { id: quotation.selectedCustomerId! },
+                await tx.student.update({
+                    where: { id: quotation.selectedStudentId! },
                     data: {
                         accountBalance: {
                             decrement: balanceUsed
@@ -142,7 +142,7 @@ export async function POST(req: NextRequest) {
                 // Create balance transaction record
                 await tx.balanceTransaction.create({
                     data: {
-                        customerId: quotation.selectedCustomerId!,
+                        studentId: quotation.selectedStudentId!,
                         amount: balanceUsed,
                         type: "DEBIT",
                         description: `Quotation conversion - Invoice ${finalInvoiceNo}`,
@@ -159,7 +159,7 @@ export async function POST(req: NextRequest) {
                 where: { quotationNo },
                 data: {
                     status: "converted",
-                    convertedToSaleId: sale.invoiceNo
+                    convertedToConsultationId: sale.invoiceNo
                 }
             })
 

@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
                 grandTotal,
                 validUntil: validUntil ? new Date(validUntil) : null,
                 warehousesId: warehouseId,
-                selectedCustomerId: customer.id,
+                selectedStudentId: customer.id,
                 status: "pending"
             }
         })
@@ -89,7 +89,7 @@ export async function GET(req: NextRequest) {
                         where: { isDeleted: false },
                         include: { product: true }
                     },
-                    selectedCustomer: true,
+                    selectedStudent: true,
                     warehouses: true
                 }
             })
@@ -104,7 +104,7 @@ export async function GET(req: NextRequest) {
             const quotations = await offlinePrisma.quotation.findMany({
                 where: { warehousesId: warehouseId, isDeleted: false },
                 include: {
-                    selectedCustomer: true,
+                    selectedStudent: true,
                     quotationItems: {
                         where: { isDeleted: false }
                     }

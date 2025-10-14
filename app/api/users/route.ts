@@ -1,22 +1,20 @@
-import { PrismaClient as Online } from "@/prisma/generated/online";
+
 import { PrismaClient as Offline } from "@/prisma/generated/offline";
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 
-const prisma = new Online()
-
-const prismaOfline = new Offline()
+const prisma = new Offline()
 
 export async function POST(req:NextRequest){
     const data = await req.json()
     const {username:userName,email,password,role,phone:phoneNumber,warehouse,specialization,licenseNumber,department} = data.formData
     try {
-        const existUser = await prisma.users_online.findUnique({where:{userName,isDeleted:false}})
+        const existUser = await prisma.users.findUnique({where:{userName,isDeleted:false}})
 
         if(existUser) return NextResponse.json("userNameExist",{status:401})
 
         const hash = await bcrypt.hash(password,10)
-        const staff = await prisma.users_online.create({
+        const staff = await prisma.users.create({
             data:{
                 userName,
                 email,
@@ -26,7 +24,7 @@ export async function POST(req:NextRequest){
                 //specialization: specialization || null,
                 //licenseNumber: licenseNumber || null,
                 //department: department || null,
-                warehouses_onlineId:warehouse
+                warehousesId:warehouse
             }
         }) 
      return NextResponse.json(staff,{status:201})
@@ -39,7 +37,7 @@ export async function POST(req:NextRequest){
 
 export async function GET(){
     try {
-        const staff = await prismaOfline.users.findMany({
+        const staff = await prisma.users.findMany({
             where:{isDeleted:false},
             select: {
                 id: true,
@@ -59,6 +57,6 @@ export async function GET(){
     } catch (error) {
         return NextResponse.json(error,{status:500})
     }finally{
-        await prismaOfline.$disconnect()
+        await prisma.$disconnect()
     }
 }

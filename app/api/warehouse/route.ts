@@ -1,16 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import onlinePrisma from "@/lib/onlinePrisma";
+
+import offlinePrisma from "@/lib/oflinePrisma";
+
 
 export async function GET(){
    try {
-    const warehouses = await onlinePrisma.warehouses_online.findMany({where:{isDeleted:false}})
+    const warehouses = await offlinePrisma.warehouses.findMany({where:{isDeleted:false}})
 
     return NextResponse.json(warehouses,{status:200})
    } catch (error) {
     return NextResponse.json(error,{status:500})
    }finally{
-    await onlinePrisma.$disconnect()
+    await offlinePrisma.$disconnect()
    }
 }
 
@@ -18,7 +20,7 @@ export async function POST(req:NextRequest){
     const data = await req.json()
     const {code,name,phone,email,description,address} = data.formData
     try {
-     const warehouses = await onlinePrisma.warehouses_online.create({
+     const warehouses = await offlinePrisma.warehouses.create({
         data:{
             name,
             warehouseCode:code,
@@ -29,9 +31,9 @@ export async function POST(req:NextRequest){
         }
      })
 
-     await onlinePrisma.receiptSettings_online.create({
+     await offlinePrisma.receiptSettings.create({
         data:{
-            warehouses_onlineId:warehouses.warehouseCode,
+            warehousesId:warehouses.warehouseCode,
             phone:"",
             email:"",
             state:"",
@@ -48,7 +50,7 @@ export async function POST(req:NextRequest){
     } catch (error) {
      return NextResponse.json(error,{status:500})
     }finally{
-     await onlinePrisma.$disconnect()
+     await offlinePrisma.$disconnect()
     }
 }
 
@@ -61,7 +63,7 @@ export async function PUT(req:NextRequest){
 
     const {warehouseCode,name,phoneNumber,email,description,address} = data
     try {
-     const warehouses = await onlinePrisma.warehouses_online.update({
+     const warehouses = await offlinePrisma.warehouses.update({
         where:{
             warehouseCode,isDeleted:false
         },
@@ -79,6 +81,6 @@ export async function PUT(req:NextRequest){
     } catch (error) {
      return NextResponse.json(error,{status:500})
     }finally{
-     await onlinePrisma.$disconnect()
+     await offlinePrisma.$disconnect()
     }
 }
