@@ -59,7 +59,7 @@ export default function Home() {
             radius: "full",
             variant: "shadow",
           })}
-          href={'/user/login'}
+          href={'/login'}
         >
           Login
         </Link>
