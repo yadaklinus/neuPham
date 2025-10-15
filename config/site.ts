@@ -1,8 +1,8 @@
 export type SiteConfig = typeof siteConfig;
 
 export const siteConfig = {
-  name: "Inventory Management by CodeGit",
-  description: "Make beautiful websites regardless of your design experience.",
+  name: "Pharmacy System by CodeGit",
+  description: "Good Care.",
   navItems: [
     {
       label: "Home",
