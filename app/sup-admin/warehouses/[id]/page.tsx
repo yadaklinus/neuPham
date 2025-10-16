@@ -394,7 +394,7 @@ export default function WarehouseDetailsPage() {
               </Card>
             )}
             
-            <Card className="border-red-200 bg-red-50">
+            {/* <Card className="border-red-200 bg-red-50">
               <CardContent className="pt-6">
                 <div className="flex items-center gap-2 text-red-800">
                   <AlertCircle className="h-5 w-5" />
@@ -406,7 +406,7 @@ export default function WarehouseDetailsPage() {
                   </div>
                 </div>
               </CardContent>
-            </Card>
+            </Card> */}
           </div>
 
           {/* Warehouse Details */}
@@ -455,7 +455,6 @@ export default function WarehouseDetailsPage() {
               <TabsTrigger value="consultations">Consultations</TabsTrigger>
               <TabsTrigger value="students">Students</TabsTrigger>
               <TabsTrigger value="staff">Staff</TabsTrigger>
-              <TabsTrigger value="security">Anti-Theft</TabsTrigger>
               <TabsTrigger value="reports">Reports</TabsTrigger>
             </TabsList>
 
@@ -487,10 +486,9 @@ export default function WarehouseDetailsPage() {
                           <Tooltip 
                             formatter={(value, name) => [
                               name === 'revenue' ? formatCurrency(value as number) : value,
-                              name === 'revenue' ? 'Revenue' : 'Orders'
+                              name === 'revenue' ? 'Revenue' : 'Consultation'
                             ]}
                           />
-                          <Bar dataKey="revenue" fill="#3b82f6" name="revenue" />
                           <Bar dataKey="orders" fill="#10b981" name="orders" />
                         </BarChart>
                       </ResponsiveContainer>
@@ -521,9 +519,7 @@ export default function WarehouseDetailsPage() {
                                   </p>
                                 </div>
                               </div>
-                              <div className="text-right">
-                                <p className="font-medium">{formatCurrency(product.totalRevenue)}</p>
-                              </div>
+                              
                             </div>
                           ))}
                         </div>
@@ -552,9 +548,7 @@ export default function WarehouseDetailsPage() {
                                   </p>
                                 </div>
                               </div>
-                              <div className="text-right">
-                                <p className="font-medium">{formatCurrency(customer.totalSpent)}</p>
-                              </div>
+                              
                             </div>
                           ))}
                         </div>
@@ -638,7 +632,7 @@ export default function WarehouseDetailsPage() {
                     All medicines with comprehensive tracking to prevent theft and ensure accountability
                   </CardDescription>
                 </CardHeader>
-                <div className="flex flex-col gap-4 md:flex-row md:items-end">
+                <div className="flex flex-col m-4 gap-4 md:flex-row md:items-end">
                                 <div className="flex-1 space-y-2">
                                   <Label htmlFor="search">Search Products</Label>
                                   <div className="relative">
@@ -671,7 +665,7 @@ export default function WarehouseDetailsPage() {
                                   <Filter className="mr-2 h-4 w-4" />
                                   Clear Filters
                                 </Button>
-                              </div>
+                </div>
                 <CardContent>
                   {warehouseData.products && warehouseData.products.length > 0 ? (
                     <Table>
@@ -768,8 +762,6 @@ export default function WarehouseDetailsPage() {
                           <TableHead>Date</TableHead>
                           <TableHead>Student</TableHead>
                           <TableHead>Diagnosis</TableHead>
-                          <TableHead>Total Amount</TableHead>
-                          <TableHead>Balance</TableHead>
                           <TableHead>Status</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -782,8 +774,6 @@ export default function WarehouseDetailsPage() {
                             </TableCell>
                             <TableCell>{consultation.selectedStudent?.name || 'Walk-in Patient'}</TableCell>
                             <TableCell className="max-w-xs truncate">{consultation.diagnosis || 'Not specified'}</TableCell>
-                            <TableCell>{formatCurrency(consultation.grandTotal)}</TableCell>
-                            <TableCell>{formatCurrency(consultation.balance)}</TableCell>
                             <TableCell>
                               {consultation.balance == 0 &&
                               <Badge variant="default" className="bg-green-600">
@@ -837,7 +827,6 @@ export default function WarehouseDetailsPage() {
                           <TableHead>Department</TableHead>
                           <TableHead>Level</TableHead>
                           <TableHead>Phone</TableHead>
-                          <TableHead>Account Balance</TableHead>
                           <TableHead>Actions</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -856,9 +845,7 @@ export default function WarehouseDetailsPage() {
                             <TableCell>{student.department || 'Not specified'}</TableCell>
                             <TableCell>{student.level || 'Not specified'}</TableCell>
                             <TableCell>{student.phone}</TableCell>
-                            <TableCell className={student.accountBalance < 0 ? "text-red-600" : "text-green-600"}>
-                              {formatCurrency(student.accountBalance)}
-                            </TableCell>
+                            
                             <TableCell>
                               <Button 
                                 variant="outline" 
@@ -984,7 +971,7 @@ export default function WarehouseDetailsPage() {
               </Card>
             </TabsContent>
 
-            <TabsContent value="security" className="space-y-4">
+            {/* <TabsContent value="security" className="space-y-4">
               <div className="space-y-4">
                 <div>
                   <h2 className="text-lg font-semibold text-red-600">Anti-Theft Security Monitoring</h2>
@@ -993,7 +980,7 @@ export default function WarehouseDetailsPage() {
                   </p>
                 </div>
 
-                {/* Security Overview Cards */}
+                
                 <div className="grid gap-4 md:grid-cols-4">
                   <Card className="border-green-200 bg-green-50">
                     <CardHeader className="pb-2">
@@ -1038,7 +1025,7 @@ export default function WarehouseDetailsPage() {
                   </Card>
                 </div>
 
-                {/* Security Features */}
+                
                 <div className="grid gap-4 md:grid-cols-2">
                   <Card>
                     <CardHeader>
@@ -1103,7 +1090,6 @@ export default function WarehouseDetailsPage() {
                   </Card>
                 </div>
 
-                {/* Recent Security Events */}
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -1125,7 +1111,6 @@ export default function WarehouseDetailsPage() {
                   </CardContent>
                 </Card>
 
-                {/* Quick Security Actions */}
                 <Card>
                   <CardHeader>
                     <CardTitle>Security Management</CardTitle>
@@ -1149,7 +1134,7 @@ export default function WarehouseDetailsPage() {
                   </CardContent>
                 </Card>
               </div>
-            </TabsContent>
+            </TabsContent> */}
 
             <TabsContent value="reports" className="space-y-4">
               <div className="grid gap-4 md:grid-cols-2">

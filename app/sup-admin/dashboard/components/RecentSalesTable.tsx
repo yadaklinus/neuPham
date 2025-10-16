@@ -22,8 +22,8 @@ export function RecentSalesTable({ sales }: RecentSalesTableProps) {
   return (
     <Card className="col-span-4">
       <CardHeader>
-        <CardTitle>Recent Sales</CardTitle>
-        <CardDescription>Latest sales transactions in your system</CardDescription>
+        <CardTitle>Recent Consultations</CardTitle>
+        <CardDescription>Latest Consultations transactions in your system</CardDescription>
       </CardHeader>
       <CardContent>
         {sales.length > 0 ? (
@@ -31,11 +31,10 @@ export function RecentSalesTable({ sales }: RecentSalesTableProps) {
             <TableHeader>
               <TableRow>
                 <TableHead>Invoice</TableHead>
-                <TableHead>Customer</TableHead>
+                <TableHead>Student</TableHead>
                 <TableHead>Products</TableHead>
                 <TableHead>Items</TableHead>
                 <TableHead>Date</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -50,7 +49,6 @@ export function RecentSalesTable({ sales }: RecentSalesTableProps) {
                     <Badge variant="secondary">{sale.items}</Badge>
                   </TableCell>
                   <TableCell>{formatDate(sale.date)}</TableCell>
-                  <TableCell className="text-right">{formatCurrency(sale.amount)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

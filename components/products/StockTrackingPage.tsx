@@ -73,8 +73,8 @@ export default function StockTrackingPage() {
   const params = useParams()
   const router = useRouter()
   
-  const warehouseId = getWareHouseId()
   const productId = params.productId as string
+  const warehouseId = params.id as string
 
   useEffect(() => {
     setEndPoint(`/warehouse/${warehouseId}/${session?.user?.role}`)
@@ -91,6 +91,7 @@ export default function StockTrackingPage() {
       const response = await fetch(`/api/product/stock-tracking?productId=${productId}&warehouseId=${warehouseId}`)
       if (response.ok) {
         const result = await response.json()
+        console.log(result)
         setData(result)
       } else {
         console.error("Failed to fetch stock data")
@@ -113,7 +114,7 @@ export default function StockTrackingPage() {
   const getMovementBadge = (type: string) => {
     return type === 'SALE' ? (
       <Badge variant="destructive" className="bg-red-100 text-red-800 hover:bg-red-100">
-        Sale
+        Consultation
       </Badge>
     ) : (
       <Badge variant="default" className="bg-green-100 text-green-800 hover:bg-green-100">
@@ -201,10 +202,10 @@ export default function StockTrackingPage() {
               <p className="text-sm text-muted-foreground">{data.product.name}</p>
             </div>
           </div>
-          <Button variant="outline" onClick={exportData}>
+          {/* <Button variant="outline" onClick={exportData}>
             <Download className="mr-2 h-4 w-4" />
             Export CSV
-          </Button>
+          </Button> */}
         </div>
 
         {/* Product Info Card */}
@@ -294,10 +295,9 @@ export default function StockTrackingPage() {
                     <TableHead>Date & Time</TableHead>
                     <TableHead>Type</TableHead>
                     <TableHead>Reference</TableHead>
-                    <TableHead>Customer/Supplier</TableHead>
+                    <TableHead>Student/Supplier</TableHead>
                     <TableHead>Quantity</TableHead>
-                    <TableHead>Unit Price</TableHead>
-                    <TableHead>Total</TableHead>
+                    
                     <TableHead>Balance After</TableHead>
                     <TableHead>Notes</TableHead>
                   </TableRow>
@@ -332,10 +332,7 @@ export default function StockTrackingPage() {
                         </span>
                       </TableCell>
                       <TableCell>{formatCurrency(movement.unitPrice)}</TableCell>
-                      <TableCell>{formatCurrency(movement.total)}</TableCell>
-                      <TableCell>
-                        <span className="font-semibold">{movement.balanceAfter}</span>
-                      </TableCell>
+                      
                       <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">
                         {movement.notes}
                       </TableCell>

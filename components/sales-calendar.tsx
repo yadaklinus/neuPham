@@ -143,7 +143,7 @@ export function SalesCalendar({ warehouseId, onDateClick, apiEndpoint, className
                 P: {formatCurrency(dayData.totalProfit)}
               </div> */}
               <div className="text-xs text-gray-500">
-                {dayData.transactionCount} Consultation
+                {dayData.transactionCount} Cons
               </div>
             </div>
           )}

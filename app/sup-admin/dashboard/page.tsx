@@ -139,27 +139,27 @@ export default function DashboardPage() {
               icon={Users}
             />
             <DashboardCard
-              title="Total Warehouses"
+              title="Total Clinics"
               value={stats?.totalWarehouses || 0}
-              description="active warehouses"
+              description="active Clinics"
               icon={Warehouse}
             />
             <DashboardCard
-              title="Total Products"
+              title="Total Drugs"
               value={stats?.totalProducts || 0}
-              description="in inventory"
+              description="in Drugs"
               icon={Package}
             />
             <DashboardCard
-              title="Total Sales"
+              title="Total Consultation"
               value={stats?.totalSales || 0}
-              description="completed transactions"
+              description="completed Consultation"
               icon={ShoppingCart}
             />
             <DashboardCard
-              title="Total Customers"
+              title="Total Students"
               value={stats?.totalCustomers || 0}
-              description="registered customers"
+              description="registered Students"
               icon={Users}
             />
           </div>

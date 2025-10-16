@@ -38,7 +38,8 @@ export async function POST(
           student:true,
           consultation: {
             include: {
-              consultationItems: true
+              consultationItems: true,
+              
             }
           }
         }

@@ -96,7 +96,7 @@ export function DailySalesModal({
               </DialogTitle>
             </div>
             <div className="flex items-center gap-2">
-              <Button
+              {/* <Button
                 variant="outline"
                 size="sm"
                 onClick={handleExport}
@@ -104,10 +104,10 @@ export function DailySalesModal({
               >
                 <Download className="h-4 w-4 mr-2" />
                 Export Excel
-              </Button>
-              <Button variant="ghost" size="sm" onClick={onClose}>
+              </Button> */}
+              {/* <Button variant="ghost" size="sm" onClick={onClose}>
                 <X className="h-4 w-4" />
-              </Button>
+              </Button> */}
             </div>
           </div>
         </DialogHeader>
@@ -129,57 +129,19 @@ export function DailySalesModal({
           <div className="space-y-6">
             {/* Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium flex items-center gap-2">
-                    <DollarSign className="h-4 w-4 text-green-600" />
-                    Total Sales
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-green-600">
-                    {formatCurrency(dailyData.totalSales)}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4 text-blue-600" />
-                    Total Profit
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-blue-600">
-                    {formatCurrency(dailyData.totalProfit)}
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    {dailyData.totalSales > 0 
-                      ? `${((dailyData.totalProfit / dailyData.totalSales) * 100).toFixed(1)}% margin`
-                      : '0% margin'
-                    }
-                  </div>
-                </CardContent>
-              </Card>
-
+              
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium flex items-center gap-2">
                     <ShoppingCart className="h-4 w-4 text-purple-600" />
-                    Transactions
+                    Conultation
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-purple-600">
                     {dailyData.transactionCount}
                   </div>
-                  <div className="text-sm text-gray-500">
-                    Avg: {dailyData.transactionCount > 0 
-                      ? formatCurrency(dailyData.totalSales / dailyData.transactionCount)
-                      : formatCurrency(0)
-                    }
-                  </div>
+                  
                 </CardContent>
               </Card>
 
@@ -187,7 +149,7 @@ export function DailySalesModal({
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium flex items-center gap-2">
                     <Package className="h-4 w-4 text-orange-600" />
-                    Products Sold
+                    Drugs 
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -243,10 +205,10 @@ export function DailySalesModal({
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <ShoppingCart className="h-5 w-5" />
-                    Sales Transactions
+                    Consultation
                   </CardTitle>
                   <CardDescription>
-                    All sales transactions for this day
+                    All Consultations for this day
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
