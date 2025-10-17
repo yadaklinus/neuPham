@@ -1,6 +1,6 @@
 "use client"
 import { getWareHouseId } from "@/hooks/get-werehouseId";
-import { useSession } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
@@ -15,15 +15,13 @@ export default function SupAdminLayout({children}:{children:React.ReactNode}){
         
         if(status == "unauthenticated"){
            
-                router.replace("/user/login")
-                
-            
+            router.replace("/user/login")  
         }
         if(status == "authenticated"){
             if(data){
                 if(data?.user?.warehousesId == "supaAdmina"){
+                    signOut()
                     router.replace("/user/login")
-
                 }
                 if(data?.user?.warehousesId !== warehouseId){
                     router.replace("/user/login")

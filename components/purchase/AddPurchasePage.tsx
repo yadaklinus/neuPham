@@ -286,8 +286,8 @@ export default function AddPurchasePage() {
         quantity: item.quantity,
         discount: item.discount,
         total: item.total,
-        customRetailPrice: item.customRetailPrice,
-        customWholesalePrice: item.customWholesalePrice
+        customRetailPrice: item.customCost,
+        customWholesalePrice: item.customCost
       })),
       referenceNo,
       subtotal,
@@ -321,15 +321,11 @@ export default function AddPurchasePage() {
             warehouseId: warehouseId
           }
           
-          if (item.customRetailPrice !== undefined) {
-            updatePayload.retailPrice = item.customRetailPrice
-          }
+          
           if (item.customCost !== undefined) {
             updatePayload.costPrice = item.customCost
           }
-          if (item.customWholesalePrice !== undefined) {
-            updatePayload.wholesalePrice = item.customWholesalePrice
-          }
+          
 
           console.log(updatePayload)
 
@@ -605,7 +601,7 @@ export default function AddPurchasePage() {
                   </div>
 
                   {/* Price Type Selection */}
-                  {selectedProduct && (
+                  {/* {selectedProduct && (
                     <div className="space-y-2">
                       <Label>Price Type</Label>
                       <Select value={priceType} onValueChange={(value: "wholesale" | "retail") => setPriceType(value)}>
@@ -620,7 +616,7 @@ export default function AddPurchasePage() {
                         </SelectContent>
                       </Select>
                     </div>
-                  )}
+                  )} */}
 
                   {/* Custom Price Controls */}
                   {selectedProduct && (
@@ -646,7 +642,7 @@ export default function AddPurchasePage() {
                           className="rounded"
                         />
                         <Label htmlFor="enable-custom-prices" className="text-sm font-medium">
-                          Update Retail price and WholeSale Price
+                          Update Price
                         </Label>
                       </div>
                       
@@ -654,36 +650,7 @@ export default function AddPurchasePage() {
                         <div className="space-y-4 text-black-300">
                           <div className="grid grid-cols-2 gap-4">
                             
-                            <div className="space-y-2">
-                              <Label htmlFor="custom-retail">Custom Retail Price</Label>
-                              <Input
-                                id="custom-retail"
-                                type="number"
-                                step="0.01"
-                                min="0"
-                                value={customRetailPrice || ""}
-                                onChange={(e) => setCustomRetailPrice(parseFloat(e.target.value) || undefined)}
-                                placeholder="Enter retail price"
-                              />
-                              <p className="text-xs text-gray-500">
-                                Original: {formatCurrency(selectedProduct.retailPrice)}
-                              </p>
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="custom-wholesale">Custom Wholesale Price</Label>
-                              <Input
-                                id="custom-wholesale"
-                                type="number"
-                                step="0.01"
-                                min="0"
-                                value={customWholesalePrice || ""}
-                                onChange={(e) => setCustomWholesalePrice(parseFloat(e.target.value) || undefined)}
-                                placeholder="Enter wholesale price"
-                              />
-                              <p className="text-xs text-gray-500">
-                                Original: {formatCurrency(selectedProduct.wholeSalePrice)}
-                              </p>
-                            </div>
+                            
 
                             <div className="space-y-2">
                               <Label htmlFor="custom-wholesale">Custom Cost</Label>

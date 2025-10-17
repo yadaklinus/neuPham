@@ -249,7 +249,7 @@ export default function EditProductPage() {
                       />
                     </div>
 
-                    <div className="space-y-2">
+                    {/* <div className="space-y-2">
                       <Label htmlFor="wholesale-price">Wholesale Selling Price *</Label>
                       <Input 
                         value={wholeSalePrice} 
@@ -259,9 +259,9 @@ export default function EditProductPage() {
                         step="0.01"
                         placeholder="0.00" 
                       />
-                    </div>
+                    </div> */}
 
-                    <div className="space-y-2">
+                    {/* <div className="space-y-2">
                       <Label htmlFor="retail-price">Retail Selling Price *</Label>
                       <Input 
                         value={retailPrice} 
@@ -271,7 +271,7 @@ export default function EditProductPage() {
                         step="0.01"
                         placeholder="0.00" 
                       />
-                    </div>
+                    </div> */}
                   </div>
 
                   <div className="grid gap-4 md:grid-cols-2">
@@ -308,7 +308,7 @@ export default function EditProductPage() {
 
             {/* Right Side - Additional Options */}
             <div className="space-y-6">
-              <Card>
+              {/* <Card>
                 <CardHeader>
                   <CardTitle>Warehouse Quantity</CardTitle>
                 </CardHeader>
@@ -324,7 +324,7 @@ export default function EditProductPage() {
                     />
                   </div>
                 </CardContent>
-              </Card>
+              </Card> */}
 
               <Card>
                 <CardHeader>

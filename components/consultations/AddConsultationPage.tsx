@@ -702,7 +702,7 @@ export default function AddConsultationPage() {
 
   const handleViewConsultations = () => {
     handleCloseSuccessDialog()
-    router.push(`${endPoint}/sales/list`)
+    router.push(`${endPoint}/sales//consultations`)
   }
   
   const handleProductSelect = (productId: string) => {
@@ -986,7 +986,7 @@ export default function AddConsultationPage() {
     </div>
 
                      {/* Price Type Selection */}
-                        {selectedProduct && (
+                        {/* {selectedProduct && (
                           <div className="space-y-2">
                             <Label>Price Type</Label>
                             <Select value={priceType} onValueChange={(value: "wholesale" | "retail") => setPriceType(value)}>
@@ -1001,7 +1001,7 @@ export default function AddConsultationPage() {
                               </SelectContent>
                             </Select>
                           </div>
-                        )}
+                        )} */}
       
                         {/* Quantity, Dosage, and Prescription Details */}
                         {selectedProduct && (
@@ -1104,20 +1104,12 @@ export default function AddConsultationPage() {
                         {selectedProduct && (
                           <div className="p-4 bg-muted rounded-lg">
                             <div className="grid grid-cols-2 gap-4 text-sm">
-                              <div>
-                                <span className="font-medium">Cost: </span> {formatCurrency(selectedProduct.cost)}
-                              </div>
+                              
                               <div>
                                 <span className="font-medium">Stock: </span> {selectedProduct.quantity} {selectedProduct.unit}
                               </div>
-                              <div>
-                                <span className="font-medium">Selected Price: </span> 
-                                {formatCurrency(getCurrentPrice(selectedProduct, priceType))}
-                              </div>
-                              <div>
-                                <span className="font-medium">Total: </span> 
-                                {formatCurrency((getCurrentPrice(selectedProduct, priceType) * quantity - discount).toFixed(2))}
-                              </div>
+                              
+                              
                             </div>
                           </div>
                         )}
@@ -1144,8 +1136,7 @@ export default function AddConsultationPage() {
                         <TableHead>Frequency</TableHead>
                         <TableHead>Duration</TableHead>
                         <TableHead>Qty</TableHead>
-                        <TableHead>Price</TableHead>
-                        <TableHead>Total</TableHead>
+                        
                         <TableHead></TableHead>
                       </TableRow>
                     </TableHeader>
@@ -1185,8 +1176,6 @@ export default function AddConsultationPage() {
                               <span className="text-xs text-muted-foreground">{item.unit}</span>
                             </div>
                           </TableCell>
-                          <TableCell>{formatCurrency(item.selectedPrice.toFixed(2))}</TableCell>
-                          <TableCell className="font-medium">{formatCurrency(item.total)}</TableCell>
                           <TableCell>
                             <Button
                               variant="ghost"
@@ -1489,21 +1478,13 @@ export default function AddConsultationPage() {
                     <br />
                     Diagnosis: {completedConsultation.diagnosis}
                     <br />
-                    Total: {formatCurrency(completedConsultation.grandTotal)}
-                    <br />
-                    Paid: {formatCurrency(completedConsultation.totalPaid)} via {completedConsultation.paymentMethods.length} method(s)
-                    {completedConsultation.balance > 0 && (
-                      <>
-                        <br />
-                        Balance: ${completedConsultation.balance}
-                      </>
-                    )}
+                    
                   </>
                 )}
               </DialogDescription>
             </DialogHeader>
             <div className="flex flex-col gap-3 mt-4">
-              <div className="text-sm text-muted-foreground">Would you like to print a receipt?</div>
+              {/* <div className="text-sm text-muted-foreground">Would you like to print a receipt?</div>
 
               <div className="flex gap-2">
                 <DropdownMenu>
@@ -1519,7 +1500,7 @@ export default function AddConsultationPage() {
                     <DropdownMenuItem onClick={() => handlePrintReceipt("A4")}>Print A4 (Full Page)</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-              </div>
+              </div> */}
 
               <div className="flex gap-2 mt-2">
                 <Button variant="outline" onClick={handleNewConsultation} className="flex-1 bg-transparent">

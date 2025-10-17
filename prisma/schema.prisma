@@ -22,8 +22,7 @@ enum mode {
 
 enum role {
   admin
-  sales
-  purchase
+  physician
 }
 
 enum unit {

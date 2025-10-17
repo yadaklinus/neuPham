@@ -1,5 +1,5 @@
 "use client"
-
+import * as XLSX from 'xlsx';
 import { useState, useEffect, useMemo } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import { AppSidebar } from "@/components/app-sidebar"
@@ -64,7 +64,8 @@ import {
   Target,
   Star,
   Search,
-  Filter
+  Filter,
+  FileText
 } from "lucide-react"
 import {
   LineChart,
@@ -103,7 +104,8 @@ export default function WarehouseDetailsPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [isSearching, setIsSearching] = useState(false)
     const [statusFilter, setStatusFilter] = useState("all")
-  
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1)
+    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
   // Fetch warehouse data using the ID from params
   const { data: warehouseData, loading, error } = fetchWareHouseData(`/api/warehouse/list`,{id:wareHouseId})
 
@@ -189,6 +191,87 @@ export default function WarehouseDetailsPage() {
     setSelectedDate(null)
   }
 
+   const exportReport = async (reportType: string) => {
+      if (!wareHouseId) return
+  
+      try {
+        const response = await fetch('/api/warehouse/reports/export', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            warehouseId: wareHouseId,
+            reportType,
+            month: selectedMonth,
+            year: selectedYear
+          })
+        })
+  
+        if (response.ok) {
+          // const data = await response.json()
+          
+          // //Create and download CSV file
+          // const blob = new Blob([data.csvData], { type: 'text/csv' })
+          // const url = window.URL.createObjectURL(blob)
+          // const a = document.createElement('a')
+          // a.href = url
+          // a.download = data.filename
+          // document.body.appendChild(a)
+          // a.click()
+          // window.URL.revokeObjectURL(url)
+          // document.body.removeChild(a)
+          
+          const data = await response.json();
+  
+  // Step 1: Parse CSV string into 2D array
+  const rows = data.csvData
+    .trim()
+    .split("\n")
+    .map((row:any) => row.split(",").map((cell:any) => cell.replace(/^"|"$/g, "")));
+  
+  // Step 2: Convert array of arrays to worksheet
+  const worksheet = XLSX.utils.aoa_to_sheet(rows);
+  
+  // Step 3: Create workbook and append sheet
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Report");
+  
+  // Step 4: Trigger Excel download
+  XLSX.writeFile(workbook, data.filename.replace(".csv", ".xlsx"));
+         console.log("sharp")
+        }
+      } catch (error) {
+        console.error('Error exporting report:', error)
+      }
+    }
+
+
+    const generateMonthlyReport = async () => {
+      if (!wareHouseId) return
+  
+      try {
+        const response = await fetch('/api/warehouse/reports/monthly', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            warehouseId: wareHouseId,
+            month: selectedMonth,
+            year: selectedYear,
+            reportType: 'all'
+          })
+        })
+  
+        if (response.ok) {
+          const data = await response.json()
+          
+        }
+      } catch (error) {
+        console.error('Error generating monthly report:', error)
+      }
+    }
   // Loading state
   if (loading) {
     return (
@@ -394,19 +477,7 @@ export default function WarehouseDetailsPage() {
               </Card>
             )}
             
-            {/* <Card className="border-red-200 bg-red-50">
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-2 text-red-800">
-                  <AlertCircle className="h-5 w-5" />
-                  <div>
-                    <p className="font-medium">Anti-Theft Monitoring</p>
-                    <p className="text-sm">
-                      All drug movements are tracked and monitored for suspicious activity
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card> */}
+           
           </div>
 
           {/* Warehouse Details */}
@@ -515,7 +586,7 @@ export default function WarehouseDetailsPage() {
                                 <div>
                                   <p className="font-medium text-sm">{product.productName}</p>
                                   <p className="text-xs text-muted-foreground">
-                                    {product.totalQuantity} units sold
+                                    {product.totalQuantity} units 
                                   </p>
                                 </div>
                               </div>
@@ -544,7 +615,7 @@ export default function WarehouseDetailsPage() {
                                 <div>
                                   <p className="font-medium text-sm">{customer.customerName}</p>
                                   <p className="text-xs text-muted-foreground">
-                                    {customer.totalOrders} orders
+                                    {customer.totalOrders} consultants
                                   </p>
                                 </div>
                               </div>
@@ -1136,11 +1207,55 @@ export default function WarehouseDetailsPage() {
               </div>
             </TabsContent> */}
 
-            <TabsContent value="reports" className="space-y-4">
+<TabsContent value="reports" className="space-y-4">
+              {/* Report Configuration */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Report Configuration</CardTitle>
+                  <CardDescription>
+                    Configure the period for your reports
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="month">Month</Label>
+                      <Select value={selectedMonth.toString()} onValueChange={(value) => setSelectedMonth(parseInt(value))}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select month" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
+                            <SelectItem key={month} value={month.toString()}>
+                              {new Date(2024, month - 1).toLocaleDateString('en-US', { month: 'long' })}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="year">Year</Label>
+                      <Select value={selectedYear.toString()} onValueChange={(value) => setSelectedYear(parseInt(value))}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select year" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i).map((year) => (
+                            <SelectItem key={year} value={year.toString()}>
+                              {year}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
               <div className="grid gap-4 md:grid-cols-2">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Clinic Performance Summary</CardTitle>
+                    <CardTitle>Performance Summary</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="flex justify-between">
@@ -1148,58 +1263,65 @@ export default function WarehouseDetailsPage() {
                       <span className="font-medium">{formatCurrency(warehouseData.stats?.totalSales || 0)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Total Consultations</span>
-                      <span className="font-medium">{warehouseData.stats?.totalConsultations || 0}</span>
+                      <span>Total Orders</span>
+                      <span className="font-medium">{warehouseData.stats?.totalOrders || 0}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Average Consultation Value</span>
+                      <span>Average Order Value</span>
                       <span className="font-medium">
-                        {formatCurrency((warehouseData.stats?.totalSales || 0) / (warehouseData.stats?.totalConsultations || 1))}
+                        {formatCurrency((warehouseData.stats?.totalSales || 0) / (warehouseData.stats?.totalOrders || 1))}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Medicines in Stock</span>
+                      <span>Products in Stock</span>
                       <span className="font-medium">{warehouseData.stats?.totalProducts || 0}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Medical Staff</span>
+                      <span>Staff Members</span>
                       <span className="font-medium">{warehouseData.stats?.assignedUsers || 0}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Registered Students</span>
-                      <span className="font-medium">{warehouseData.stats?.totalStudents || 0}</span>
                     </div>
                   </CardContent>
                 </Card>
 
                 <Card>
                   <CardHeader>
-                    <CardTitle>Clinic Reports</CardTitle>
+                    <CardTitle>Export Reports</CardTitle>
+                    <CardDescription>
+                      Generate and download various reports
+                    </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-2">
-                    <Button variant="outline" className="w-full justify-start">
-                      <Calendar className="mr-2 h-4 w-4" />
-                      Monthly Clinic Report
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start"
+                      onClick={() => exportReport('monthly')}
+                    >
+                      <FileText className="mr-2 h-4 w-4" />
+                      Export Monthly Report
                     </Button>
-                    <Button variant="outline" className="w-full justify-start">
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start"
+                      onClick={() => exportReport('inventory')}
+                    >
                       <Package className="mr-2 h-4 w-4" />
-                      Medicine Inventory Report
+                      Export Inventory Report
                     </Button>
-                    <Button variant="outline" className="w-full justify-start">
-                      <Activity className="mr-2 h-4 w-4" />
-                      Consultation Records
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start"
+                      onClick={() => exportReport('sales')}
+                    >
+                      <ShoppingCart className="mr-2 h-4 w-4" />
+                      Export Sales Report
                     </Button>
-                    <Button variant="outline" className="w-full justify-start">
-                      <Users className="mr-2 h-4 w-4" />
-                      Student Health Records
-                    </Button>
-                    <Button variant="outline" className="w-full justify-start">
-                      <AlertTriangle className="mr-2 h-4 w-4" />
-                      Drug Tracking Report
-                    </Button>
-                    <Button variant="outline" className="w-full justify-start">
-                      <AlertCircle className="mr-2 h-4 w-4" />
-                      Security Audit Report
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start"
+                      onClick={generateMonthlyReport}
+                    >
+                      <Calendar className="mr-2 h-4 w-4" />
+                      Generate Monthly Analytics
                     </Button>
                   </CardContent>
                 </Card>

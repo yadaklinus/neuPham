@@ -34,7 +34,6 @@ export default function AddUserPage() {
   const [endPoint, setEndPoint] = useState("")
   const {data:session} = useSession()
 
-  const {online} = useOnlineStatus()
 
   const warehouseId = getWareHouseId()
   const initField = {
@@ -102,24 +101,6 @@ export default function AddUserPage() {
     // 
 
   }
-
-  if(!online){
-    return(
-      <>
-        <div className="flex flex-1 items-center justify-center">
-                  <Card className="w-96">
-                    <CardHeader>
-                      <CardTitle className="text-red-600">Error</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p>{'Create User When Online'}</p>
-                    </CardContent>
-                  </Card>
-                </div>
-      </>
-    )
-  }
-
   return (
     <>
         <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
@@ -274,8 +255,7 @@ export default function AddUserPage() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="admin">Administrator</SelectItem>
-                        <SelectItem value="sales">Sales</SelectItem>
-                        <SelectItem value="purchase">Purchase</SelectItem>
+                        <SelectItem value="physician">Physician</SelectItem>
                       </SelectContent>
                     </Select>
                     <div className="text-xs text-muted-foreground space-y-1">

@@ -177,7 +177,7 @@ export default function ConsultationDetailPage() {
               <h1 className="text-3xl font-bold text-blue-600">Consultation Details</h1>
             </div>
           </div>
-          <div className="flex gap-2">
+          {/* <div className="flex gap-2">
             <Button onClick={handleEdit}>
               <Edit className="mr-2 h-4 w-4" />
               Edit
@@ -186,7 +186,7 @@ export default function ConsultationDetailPage() {
               <Printer className="mr-2 h-4 w-4" />
               Print
             </Button>
-          </div>
+          </div> */}
         </div>
 
         {/* Consultation Info */}
@@ -214,10 +214,10 @@ export default function ConsultationDetailPage() {
                   <label className="text-sm font-medium text-muted-foreground">Status</label>
                   <div className="mt-1">{getStatusBadge()}</div>
                 </div>
-                <div>
+                {/* <div>
                   <label className="text-sm font-medium text-muted-foreground">Total Amount</label>
                   <p className="text-lg font-semibold text-green-600">{formatCurrency(consultation.grandTotal)}</p>
-                </div>
+                </div> */}
               </div>
             </CardContent>
           </Card>
@@ -300,7 +300,7 @@ export default function ConsultationDetailPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          {/* <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <DollarSign className="h-5 w-5" />
@@ -342,7 +342,7 @@ export default function ConsultationDetailPage() {
                 </div>
               )}
             </CardContent>
-          </Card>
+          </Card> */}
         </div>
 
         {/* Prescribed Items */}
@@ -359,12 +359,10 @@ export default function ConsultationDetailPage() {
                 <TableRow>
                   <TableHead>Product</TableHead>
                   <TableHead>Quantity</TableHead>
-                  <TableHead>Price</TableHead>
                   <TableHead>Dosage</TableHead>
                   <TableHead>Frequency</TableHead>
                   <TableHead>Duration</TableHead>
                   <TableHead>Instructions</TableHead>
-                  <TableHead>Total</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -377,7 +375,6 @@ export default function ConsultationDetailPage() {
                       </div>
                     </TableCell>
                     <TableCell>{item.quantity}</TableCell>
-                    <TableCell>{formatCurrency(item.selectedPrice)}</TableCell>
                     <TableCell>{item.dosage || 'N/A'}</TableCell>
                     <TableCell>{item.frequency || 'N/A'}</TableCell>
                     <TableCell>{item.duration || 'N/A'}</TableCell>
@@ -386,7 +383,6 @@ export default function ConsultationDetailPage() {
                         {item.instructions || 'N/A'}
                       </div>
                     </TableCell>
-                    <TableCell className="font-medium">{formatCurrency(item.total)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

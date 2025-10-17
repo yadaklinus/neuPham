@@ -180,26 +180,6 @@ export default function ConsultationListPage() {
               <p className="text-xs text-muted-foreground">Fully paid</p>
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Pending Payments</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(pendingPayments)}</div>
-              <p className="text-xs text-muted-foreground">Outstanding balance</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(totalRevenue)}</div>
-              <p className="text-xs text-muted-foreground">From consultations</p>
-            </CardContent>
-          </Card>
         </div>
 
         {/* Filters */}
@@ -260,9 +240,6 @@ export default function ConsultationListPage() {
                   <TableHead>Student</TableHead>
                   <TableHead>Diagnosis</TableHead>
                   <TableHead>Items</TableHead>
-                  <TableHead>Total</TableHead>
-                  <TableHead>Paid</TableHead>
-                  <TableHead>Balance</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
@@ -302,28 +279,25 @@ export default function ConsultationListPage() {
                         {consultation.consultationItems?.length || 0} item{(consultation.consultationItems?.length || 0) > 1 ? "s" : ""}
                       </div>
                     </TableCell>
-                    <TableCell className="font-medium">{formatCurrency(consultation.grandTotal)}</TableCell>
-                    <TableCell className="text-green-600">{formatCurrency(consultation.amountPaid)}</TableCell>
-                    <TableCell className={consultation.balance > 0 ? "text-red-600" : "text-green-600"}>
-                      {formatCurrency(consultation.balance)}
-                    </TableCell>
                     <TableCell>{getStatusBadge(consultation)}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Button variant="ghost" size="sm" onClick={() => handleView(consultation.invoiceNo)}>
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleEdit(consultation.invoiceNo)}>
+                        {/* <Button variant="ghost" size="sm" onClick={() => handleEdit(consultation.invoiceNo)}>
                           <Edit className="h-4 w-4" />
-                        </Button>
+                        </Button> */}
+                        {session?.user.role == "admin" && 
                         <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => handleDelete(consultation.invoiceNo)} 
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => handleDelete(consultation.invoiceNo)} 
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                      }
                       </div>
                     </TableCell>
                   </TableRow>

@@ -242,11 +242,11 @@ export function SupAdminAppSidebar({ ...props }: React.ComponentProps<typeof Sid
           url: `${endpoint}/products/list`,
           icon: Eye,
         },
-        {
-          title: "Update Medicine",
-          url: `${endpoint}/products/update`,
-          icon: Plus,
-        },
+        // {
+        //   title: "Update Medicine",
+        //   url: `${endpoint}/products/update`,
+        //   icon: Plus,
+        // },
       ],
     },
    

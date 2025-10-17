@@ -451,7 +451,10 @@ export default function ViewPurchasesPage() {
                             <DropdownMenuContent align="end">
                               <DropdownMenuLabel>Actions</DropdownMenuLabel>
                               
-                        
+                              <DropdownMenuItem onClick={() => router.replace(`${endPoint}/purchases/${purchase.id}`)}>
+                                <Eye className="mr-2 h-4 w-4" />
+                                View Purchase
+                              </DropdownMenuItem>
                               
                             <DropdownMenuItem onClick={() => handlePrintReceipt(purchase)}>
                                 <Printer className="mr-2 h-4 w-4" />

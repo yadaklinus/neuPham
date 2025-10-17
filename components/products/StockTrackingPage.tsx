@@ -100,6 +100,7 @@ export default function StockTrackingPage() {
       console.error("Error fetching stock data:", error)
     } finally {
       setLoading(false)
+      console.log(data)
     }
   }
 
@@ -298,7 +299,6 @@ export default function StockTrackingPage() {
                     <TableHead>Student/Supplier</TableHead>
                     <TableHead>Quantity</TableHead>
                     
-                    <TableHead>Balance After</TableHead>
                     <TableHead>Notes</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -331,7 +331,6 @@ export default function StockTrackingPage() {
                           {movement.quantity > 0 ? '+' : ''}{movement.quantity}
                         </span>
                       </TableCell>
-                      <TableCell>{formatCurrency(movement.unitPrice)}</TableCell>
                       
                       <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">
                         {movement.notes}

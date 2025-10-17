@@ -24,6 +24,7 @@ import {
   Receipt,
   Calculator,
   Quote,
+  Stethoscope,
 } from "lucide-react"
 
 
@@ -152,64 +153,41 @@ export function PurchaseSidebar({ ...props }: React.ComponentProps<typeof Sideba
   // const isOnline = useConnectionCheck()
   
   return (
-    <Sidebar collapsible="icon" {...props}>
+    <Sidebar className="mb-4" collapsible="icon" {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <a href="#">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                  <Package className="size-4" />
+                <div className="flex aspect-square size-12 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+                <img src="/neu.jpg"/>
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">{data?.companyName}</span>
-                  <span className="truncate text-xs">Purchase Management System</span>
+                  <span className="truncate text-xs">Clinic Management System</span>
                   {/* {isOnline ? "online" : "ofline"} */}
                 </div>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
-          <SidebarMenuItem>
-             
-          </SidebarMenuItem>
+          
         </SidebarMenu>
         <SidebarMenu>
           <SidebarMenuItem>
           <SidebarMenuButton
-              tooltip="Logout"
+              tooltip="Consultation"
               onClick={()=>router.replace(`${endpoint}/sales/add`)}
               className="bg-blue-500 text-white hover:bg-blue-600 transition"
             >
-              <ArrowLeftRight className="mr-2 h-4 w-4" />
-              <span>POS - Sales</span>
+              <Stethoscope className="mr-2 h-4 w-4" />
+              <span>New Consultation</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
         
-      <SidebarMenu>
-      <SidebarMenuItem>
-        <Popover open={open} onOpenChange={setOpen}>
-          <PopoverTrigger asChild>
-            <SidebarMenuButton
-              tooltip="Calculator"
-              className="hover:bg-blue-600 transition"
-            >
-              <Calculator className="mr-2 h-4 w-4" />
-              <span>Calculator</span>
-            </SidebarMenuButton>
-          </PopoverTrigger>
-          <PopoverContent
-            side="right"
-            align="start"
-            className="p-0 shadow-xl border rounded-2xl w-80"
-          >
-            <CalculatorCard />
-          </PopoverContent>
-        </Popover>
-      </SidebarMenuItem>
-    </SidebarMenu>
+      
         <NavSection title="Overview" items={[
                 {
                   title: "Dashboard",
@@ -217,40 +195,44 @@ export function PurchaseSidebar({ ...props }: React.ComponentProps<typeof Sideba
                   icon: Home,
                 },
               ]} />
-        <NavSection title="Inventory" items={[
-   
+        <NavSection title="Clinic Operations" items={[
     {
-      title: "Products",
-      icon: Package,
+      title: "Consultations",
+      icon: Stethoscope,
       items: [
         {
-          title: "Add Product",
-          url: `${endpoint}/products/add`,
+          title: "New Consultation",
+          url: `${endpoint}/sales/add`,
           icon: Plus,
         },
         {
-          title: "View Products",
-          url: `${endpoint}/products/list`,
+          title: "View Consultations",
+          url: `${endpoint}/sales/consultations`,
           icon: Eye,
         },
         
       ],
     },
-   
+  
     {
-      title: "Purchases",
-      icon: Truck,
+      title: "Medicines",
+      icon: Package,
       items: [
         {
-          title: "Add Purchase",
-          url: `${endpoint}/purchases/add`,
+          title: "Add Medicine",
+          url: `${endpoint}/products/add`,
           icon: Plus,
         },
         {
-          title: "View Purchases",
-          url: `${endpoint}/purchases/list`,
+          title: "View Medicines",
+          url: `${endpoint}/products/list`,
           icon: Eye,
         },
+        // {
+        //   title: "Update Medicine",
+        //   url: `${endpoint}/products/update`,
+        //   icon: Plus,
+        // },
       ],
     },
    
@@ -260,16 +242,17 @@ export function PurchaseSidebar({ ...props }: React.ComponentProps<typeof Sideba
                 title: "People",
                 icon: Users,
                 items: [
-                 
+                  
                   {
-                    title: "Suppliers",
-                    url: `${endpoint}/people/suppliers`,
-                    icon: Building2,
+                    title: "Students",
+                    url: `${endpoint}/people/students`,
+                    icon: UserCheck,
                   },
+                  
                 ],
               },
             ]} />
-        
+       
 
         
 
@@ -286,7 +269,15 @@ export function PurchaseSidebar({ ...props }: React.ComponentProps<typeof Sideba
           </SidebarMenuItem>
         </SidebarMenu>
 
-        <Button onClick={()=>signOut()} style={{display:"none"}} className="bg-red-500">Logout</Button>
+        <SidebarMenu>
+          <SidebarMenuItem>
+          <SidebarMenuButton
+            >
+              
+              <span></span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
 
       </SidebarContent>
       <SidebarRail />

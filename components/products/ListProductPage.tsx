@@ -176,17 +176,15 @@ const [isSearching, setIsSearching] = useState(false)
      const formattedData = productsData.map((product:any) => ({
       Name: product.name,
       Barcode: product.barcode,
-      "Wholesale Price": product.wholeSalePrice,
-      "Retail Price": product.retailPrice,
+      
       Cost: product.cost,
       Quantity: product.quantity,
-      "Tax Rate": product.taxRate,
+      
       Unit: product.unit,
       Description: product.description,
       "Created At": product.createdAt,
       "Updated At": product.updatedAt,
-      "Is Synced": product.sync ? "Yes" : "No",
-      "Is Deleted": product.isDeleted ? "Yes" : "No"
+      
     }));
 
     // 2. Convert JSON to worksheet
@@ -237,12 +235,8 @@ const [isSearching, setIsSearching] = useState(false)
               <h1 className="text-2xl font-semibold text-blue-600">Products</h1>
             </div>
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm">
-                <Upload className="mr-2 h-4 w-4" />
-                Import
-              </Button>
               <Button onClick={exportData} variant="outline" size="sm">
-                <Download className="mr-2 h-4 w-4" />
+                <Upload className="mr-2 h-4 w-4" />
                 Export
               </Button>
               <Button asChild>
@@ -254,40 +248,7 @@ const [isSearching, setIsSearching] = useState(false)
             </div>
           </div>
 
-            {/* <div className="grid gap-4 md:grid-cols-3">
-                       <Card>
-                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                           <CardTitle className="text-sm font-medium">Total Cost Value</CardTitle>
-                           <DollarSign className="h-4 w-4 text-muted-foreground" />
-                         </CardHeader>
-                         <CardContent>
-                           <div className="text-2xl font-bold">{formatCurrency(totalCost)}</div>
-                           
-                         </CardContent>
-                       </Card>
-                       <Card>
-                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                           <CardTitle className="text-sm font-medium">Total Retail Value</CardTitle>
-                           <DollarSign className="h-4 w-4 text-muted-foreground" />
-                         </CardHeader>
-                         <CardContent>
-                           <div className="text-2xl font-bold">{formatCurrency(totalRetail)}</div>
-                           
-                         </CardContent>
-                       </Card>
-                       <Card>
-                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                           <CardTitle className="text-sm font-medium">Total Retail WholeSale</CardTitle>
-                           <DollarSign className="h-4 w-4 text-muted-foreground" />
-                         </CardHeader>
-                         <CardContent>
-                           <div className="text-2xl font-bold">{formatCurrency(totalWholesale)}</div>
-                           
-                         </CardContent>
-                       </Card>
-                      
-                     </div> */}
-
+           
           {/* Filters and Search */}
           <Card>
             <CardHeader>
@@ -346,8 +307,7 @@ const [isSearching, setIsSearching] = useState(false)
                     <TableHead>Product</TableHead>
                     <TableHead>Barcode</TableHead>
                     <TableHead>Cost</TableHead>
-                    <TableHead>Wholesale Price</TableHead>
-                    <TableHead>Retail Price</TableHead>
+                    
                     <TableHead>Stock</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                     {/* <TableHead>Delete</TableHead> */}
@@ -359,8 +319,6 @@ const [isSearching, setIsSearching] = useState(false)
                       <TableCell className="font-medium">{product.name}</TableCell>
                       <TableCell>{product.barcode}</TableCell>
                       <TableCell>{formatCurrency(product.cost)}</TableCell>
-                      <TableCell>{formatCurrency(product.wholeSalePrice)}</TableCell>
-                      <TableCell>{formatCurrency(product.retailPrice.toFixed(2))}</TableCell>
                       <TableCell>{product.quantity}</TableCell>                      
                       <TableCell className="text-right">
                         <DropdownMenu>
