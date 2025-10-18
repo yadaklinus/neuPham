@@ -49,6 +49,7 @@ import { SystemStatus } from "@/components/system-status"
 import { useSession } from "next-auth/react"
 import { Wallet } from "lucide-react"
 import { useMemo } from "react"
+import SearchableStudentDropdown from "@/components/students/SearchableStudentDropdown"
 
 interface ConsultationItem {
   id: string
@@ -514,6 +515,11 @@ export default function AddConsultationPage() {
         notes,
         cashier: "Clinic Consultant",
         warehouseId,
+        userId: session?.user?.id, // Track who added the consultation
+        doctor: {
+          id: session?.user?.id,
+          name: session?.user?.name || "Unknown User"
+        },
         student: {
           id: selectedStudentData?.id || "",
           name: selectedStudentData?.name || "Walk-in Student",
@@ -772,44 +778,15 @@ export default function AddConsultationPage() {
               <Card>
                 <CardHeader>
                   <CardTitle>Student Information</CardTitle>
+                  <CardDescription>Search and select a student for the consultation</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Select value={selectedStudent} onValueChange={handleStudentChange}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select student" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {students?.map((student:any) => (
-                        <SelectItem key={student.id} value={student.id}>
-                          <div className="flex items-center gap-2">
-                            <div>
-                              <div className="font-medium">{student.name}</div>
-                              <div className="text-sm text-muted-foreground">
-                                {student.matricNumber} • {student.department || 'N/A'}
-                              </div>
-                            </div>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {selectedStudentData && (
-                    <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <span className="font-medium">Blood Group:</span> {selectedStudentData.bloodGroup || 'N/A'}
-                        </div>
-                        <div>
-                          <span className="font-medium">Genotype:</span> {selectedStudentData.genotype || 'N/A'}
-                        </div>
-                        {selectedStudentData.allergies && (
-                          <div className="col-span-2">
-                            <span className="font-medium text-red-600">Allergies:</span> {selectedStudentData.allergies}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
+                  <SearchableStudentDropdown
+                    students={students || []}
+                    selectedStudent={selectedStudent}
+                    onStudentChange={handleStudentChange}
+                    placeholder="Search students by name, matric number, or department..."
+                  />
                 </CardContent>
               </Card>
 
@@ -944,14 +921,7 @@ export default function AddConsultationPage() {
                               </Badge>
                             )}
                           </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm transition-colors group-hover:text-blue-100">
-                              W: {formatCurrency(product.wholeSalePrice)}
-                            </span>
-                            <span className="font-semibold transition-colors group-hover:text-white">
-                              R: {formatCurrency(product.retailPrice)}
-                            </span>
-                          </div>
+                          
                         </div>
                         <div className="flex items-center justify-between w-full text-sm transition-colors group-hover:text-blue-100">
                           <span>
@@ -1023,16 +993,7 @@ export default function AddConsultationPage() {
                                 required
                               />
                             </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="discount">Discount</Label>
-                              <Input
-                                id="discount"
-                                type="number"
-                                min="0"
-                                value={discount}
-                                onChange={(e) => setDiscount(Number.parseFloat(e.target.value) || 0)}
-                              />
-                            </div>
+                            
                           </div>
                         )}
 

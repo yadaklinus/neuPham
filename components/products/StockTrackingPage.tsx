@@ -34,7 +34,7 @@ import { formatCurrency } from "@/lib/utils"
 
 interface StockMovement {
   id: string
-  type: 'SALE' | 'PURCHASE'
+  type: 'SALE' | 'PURCHASE' | 'DISPENSED' | 'RECEIVED' | 'RETURNED' | 'ADJUSTED'
   date: Date
   quantity: number
   reference: string
@@ -44,6 +44,19 @@ interface StockMovement {
   total: number
   notes: string
   balanceAfter: number
+  staff?: {
+    id: string
+    userName: string
+    email: string
+    role: string
+  }
+  patient?: {
+    id: string
+    name: string
+    matricNumber: string
+  }
+  previousStock?: number
+  newStock?: number
 }
 
 interface Product {
@@ -105,23 +118,67 @@ export default function StockTrackingPage() {
   }
 
   const getMovementIcon = (type: string) => {
-    return type === 'SALE' ? (
-      <ShoppingCart className="h-4 w-4 text-red-600" />
-    ) : (
-      <Truck className="h-4 w-4 text-green-600" />
-    )
+    switch (type) {
+      case 'SALE':
+      case 'DISPENSED':
+        return <ShoppingCart className="h-4 w-4 text-red-600" />
+      case 'PURCHASE':
+      case 'RECEIVED':
+        return <Truck className="h-4 w-4 text-green-600" />
+      case 'RETURNED':
+        return <TrendingUp className="h-4 w-4 text-blue-600" />
+      case 'ADJUSTED':
+        return <Activity className="h-4 w-4 text-yellow-600" />
+      default:
+        return <Activity className="h-4 w-4 text-gray-600" />
+    }
   }
 
   const getMovementBadge = (type: string) => {
-    return type === 'SALE' ? (
-      <Badge variant="destructive" className="bg-red-100 text-red-800 hover:bg-red-100">
-        Consultation
-      </Badge>
-    ) : (
-      <Badge variant="default" className="bg-green-100 text-green-800 hover:bg-green-100">
-        Purchase
-      </Badge>
-    )
+    switch (type) {
+      case 'SALE':
+        return (
+          <Badge variant="destructive" className="bg-red-100 text-red-800 hover:bg-red-100">
+            Sale
+          </Badge>
+        )
+      case 'DISPENSED':
+        return (
+          <Badge variant="destructive" className="bg-red-100 text-red-800 hover:bg-red-100">
+            Dispensed
+          </Badge>
+        )
+      case 'PURCHASE':
+        return (
+          <Badge variant="default" className="bg-green-100 text-green-800 hover:bg-green-100">
+            Purchase
+          </Badge>
+        )
+      case 'RECEIVED':
+        return (
+          <Badge variant="default" className="bg-green-100 text-green-800 hover:bg-green-100">
+            Received
+          </Badge>
+        )
+      case 'RETURNED':
+        return (
+          <Badge variant="default" className="bg-blue-100 text-blue-800 hover:bg-blue-100">
+            Returned
+          </Badge>
+        )
+      case 'ADJUSTED':
+        return (
+          <Badge variant="default" className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">
+            Adjusted
+          </Badge>
+        )
+      default:
+        return (
+          <Badge variant="outline">
+            {type}
+          </Badge>
+        )
+    }
   }
 
   const exportData = () => {
@@ -297,8 +354,9 @@ export default function StockTrackingPage() {
                     <TableHead>Type</TableHead>
                     <TableHead>Reference</TableHead>
                     <TableHead>Student/Supplier</TableHead>
+                    <TableHead>Administered By</TableHead>
                     <TableHead>Quantity</TableHead>
-                    
+                    <TableHead>Stock Change</TableHead>
                     <TableHead>Notes</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -325,13 +383,42 @@ export default function StockTrackingPage() {
                         </div>
                       </TableCell>
                       <TableCell className="font-mono text-sm">{movement.reference}</TableCell>
-                      <TableCell>{movement.customer || movement.supplier || 'N/A'}</TableCell>
+                      <TableCell>
+                        {movement.patient ? (
+                          <div>
+                            <div className="font-medium">{movement.patient.name}</div>
+                            <div className="text-xs text-muted-foreground">{movement.patient.matricNumber}</div>
+                          </div>
+                        ) : (
+                          movement.customer || movement.supplier || 'N/A'
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {movement.staff ? (
+                          <div>
+                            <div className="font-medium">{movement.staff.userName}</div>
+                            <div className="text-xs text-muted-foreground capitalize">{movement.staff.role}</div>
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">N/A</span>
+                        )}
+                      </TableCell>
                       <TableCell>
                         <span className={movement.quantity > 0 ? 'text-green-600' : 'text-red-600'}>
                           {movement.quantity > 0 ? '+' : ''}{movement.quantity}
                         </span>
                       </TableCell>
-                      
+                      <TableCell>
+                        {movement.previousStock !== undefined && movement.newStock !== undefined ? (
+                          <div className="text-sm">
+                            <span className="text-muted-foreground">{movement.previousStock}</span>
+                            <span className="mx-1">→</span>
+                            <span className="font-medium">{movement.newStock}</span>
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">N/A</span>
+                        )}
+                      </TableCell>
                       <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">
                         {movement.notes}
                       </TableCell>

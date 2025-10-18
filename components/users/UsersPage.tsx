@@ -109,6 +109,36 @@ export default function UsersPage() {
     }
   }
 
+  const handleDeleteUser = async (userId: string, userName: string) => {
+    if (!confirm(`Are you sure you want to delete user "${userName}"? This action cannot be undone.`)) {
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/users/${userId}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ 
+          deletedBy: session?.user?.id || "system"
+        }),
+      })
+
+      const result = await response.json()
+
+      if (response.ok && result.success) {
+        alert(result.message || "User deleted successfully!")
+        window.location.reload()
+      } else {
+        alert(`Error: ${result.error || "Failed to delete user"}`)
+      }
+    } catch (error) {
+      alert("Error deleting user")
+      console.error(error)
+    }
+  }
+
   
 
   return (
@@ -253,23 +283,23 @@ export default function UsersPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => window.location.href = `${endpoint}/people/users/${user.id}`}>
                               <Eye className="mr-2 h-4 w-4" />
                               View Profile
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
+                            {/* <DropdownMenuItem onClick={() => window.location.href = `${endpoint}/people/users/${user.id}/edit`}>
                               <Edit className="mr-2 h-4 w-4" />
                               Edit User
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
+                            </DropdownMenuItem> */}
+                            {/* <DropdownMenuItem onClick={() => window.location.href = `${endpoint}/people/users/${user.id}/reset-password`}>
                               <Shield className="mr-2 h-4 w-4" />
                               Reset Password
-                            </DropdownMenuItem>
+                            </DropdownMenuItem> */}
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem className="text-red-600">
+                            {/* <DropdownMenuItem className="text-red-600" onClick={() => handleDeleteUser(user.id, user.userName)}>
                               <Trash2 className="mr-2 h-4 w-4" />
                               Delete User
-                            </DropdownMenuItem>
+                            </DropdownMenuItem> */}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>

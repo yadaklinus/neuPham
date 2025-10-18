@@ -19,6 +19,9 @@ export async function POST(
         products: true,
         student:true,
         consultation: {
+          where: {
+            isDeleted: false, // ✅ only include consultations that are not deleted
+          },
           include: {
             consultationItems: true
           }
@@ -30,20 +33,24 @@ export async function POST(
     if (!warehouse) {
       warehouse = await offlinePrisma.warehouses.findUnique({
         where: {
-          id: id,isDeleted:false
+          warehouseCode: id,
+          isDeleted: false,
         },
         include: {
           users: true,
           products: true,
-          student:true,
+          student: true,
           consultation: {
+            where: {
+              isDeleted: false, // ✅ only include consultations that are not deleted
+            },
             include: {
               consultationItems: true,
-              
-            }
-          }
-        }
+            },
+          },
+        },
       });
+      
     }
 
     if (!warehouse) {

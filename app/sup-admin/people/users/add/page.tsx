@@ -253,8 +253,7 @@ export default function AddUserPage() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="admin">Administrator</SelectItem>
-                        <SelectItem value="sales">Sales</SelectItem>
-                        <SelectItem value="purchase">Purchase</SelectItem>
+                        <SelectItem value="physician">Physician</SelectItem>
                       </SelectContent>
                     </Select>
                     <div className="text-xs text-muted-foreground space-y-1">

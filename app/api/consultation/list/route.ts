@@ -37,7 +37,16 @@ export async function POST(req: NextRequest) {
                         }
                     }
                 },
-                paymentMethod: true
+                paymentMethod: true,
+                // Include user who created the consultation
+                createdByUser: {
+                    select: {
+                        id: true,
+                        userName: true,
+                        email: true,
+                        role: true
+                    }
+                }
             },
             orderBy: { createdAt: 'desc' }
         });

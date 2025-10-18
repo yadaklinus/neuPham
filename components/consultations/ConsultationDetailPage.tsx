@@ -85,7 +85,7 @@ export default function ConsultationDetailPage() {
   const { data: session } = useSession()
   const params = useParams()
   const router = useRouter()
-  const warehouseId = getWareHouseId()
+  const warehouseId = params.id as string
 
   useEffect(() => {
     setEndPoint(`/warehouse/${warehouseId}/${session?.user?.role}`)

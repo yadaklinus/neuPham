@@ -17,7 +17,8 @@ export async function POST(req: NextRequest) {
             symptoms,
             warehouseId, // This is the warehouseCode
             student,
-            doctor // Doctor/staff for tracking
+            doctor, // Doctor/staff for tracking
+            userId // User ID from session for tracking who added the consultation
         } = await req.json();
 
         // Basic validation
@@ -51,6 +52,7 @@ export async function POST(req: NextRequest) {
                     balance: balance || 0,
                     warehousesId: warehouseId, // Foreign key to Warehouses
                     selectedStudentId: student.id,
+                    createdBy: userId || doctor?.id || 'system', // Track who created the consultation
                 }
             });
 
@@ -103,19 +105,19 @@ export async function POST(req: NextRequest) {
 
                 // Create the stock tracking record for auditing (only if we have a doctor/staff ID)
                 if (doctor && doctor.id) {
-                    await tx.stockTracking.create({
-                        data: {
-                            productId: item.productId,
-                            action: 'dispensed',
-                            quantity: item.quantity,
-                            previousStock: product.quantity,
-                            newStock: product.quantity - item.quantity,
-                            staffId: doctor.id,
-                            reason: `Dispensed for consultation ${newConsultation.invoiceNo}`,
-                            patientId: student.id,
-                            warehouseId: warehouseId,
-                        }
-                    });
+                    // await tx.stockTracking.create({
+                    //     data: {
+                    //         productId: item.productId,
+                    //         action: 'dispensed',
+                    //         quantity: item.quantity,
+                    //         previousStock: product.quantity,
+                    //         newStock: product.quantity - item.quantity,
+                    //         staffId: doctor.id,
+                    //         reason: `Dispensed for consultation ${newConsultation.invoiceNo}`,
+                    //         patientId: student.id,
+                    //         warehouseId: warehouseId,
+                    //     }
+                    // });
 
                     // Anti-theft: Check for suspicious activity patterns
                     const suspiciousThreshold = 10; // Threshold for large quantities
@@ -169,11 +171,11 @@ export async function POST(req: NextRequest) {
                     }
 
                     // Create suspicious activity record if detected
-                    if (suspiciousActivity) {
-                        await tx.suspiciousActivity.create({
-                            data: suspiciousActivity
-                        });
-                    }
+                    // if (suspiciousActivity) {
+                    //     await tx.suspiciousActivity.create({
+                    //         data: suspiciousActivity
+                    //     });
+                    // }
                 }
             }
 
@@ -309,18 +311,7 @@ export async function DELETE(req: NextRequest) {
                         });
 
                         // 2. Create a stock tracking record for the reversal
-                        await tx.stockTracking.create({
-                            data: {
-                                productId: item.productId,
-                                action: 'returned',
-                                quantity: item.quantity,
-                                previousStock: currentStock,
-                                newStock: currentStock + item.quantity,
-                                staffId: userId,
-                                reason: `Reversal for cancelled consultation ${consultationId}`,
-                                warehouseId: consultation.warehousesId || "",
-                            }
-                        });
+                        
                     }
                 }
             }

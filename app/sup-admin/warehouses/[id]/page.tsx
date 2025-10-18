@@ -88,6 +88,8 @@ import Link from "next/link"
 import { SalesCalendar } from "@/components/sales-calendar"
 import { DailySalesModal } from "@/components/daily-sales-modal"
 import { Input } from "@heroui/input"
+import { useSession } from "next-auth/react"
+import bcrypt from "bcryptjs"
 
 // Color palette for charts
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
@@ -103,9 +105,17 @@ export default function WarehouseDetailsPage() {
   const wareHouseId = path?.split("/")[3]
   const [searchQuery, setSearchQuery] = useState("")
   const [isSearching, setIsSearching] = useState(false)
-    const [statusFilter, setStatusFilter] = useState("all")
+  const [statusFilter, setStatusFilter] = useState("all")
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1)
-    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
+  
+  // User management states
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [userToDelete, setUserToDelete] = useState<any>(null)
+  const [deletePassword, setDeletePassword] = useState("")
+  const [isDeletingUser, setIsDeletingUser] = useState(false)
+  
+  const { data: session } = useSession()
   // Fetch warehouse data using the ID from params
   const { data: warehouseData, loading, error } = fetchWareHouseData(`/api/warehouse/list`,{id:wareHouseId})
 
@@ -335,6 +345,79 @@ export default function WarehouseDetailsPage() {
     if (quantity <= 5) return { status: 'Critical', color: 'text-red-600', bg: 'bg-red-100' }
     if (quantity <= 10) return { status: 'Low', color: 'text-yellow-600', bg: 'bg-yellow-100' }
     return { status: 'Good', color: 'text-green-600', bg: 'bg-green-100' }
+  }
+
+  const handleViewUser = (userId: string) => {
+    // Navigate to user profile view
+    router.push(`/sup-admin/warehouses/${wareHouseId}/users/${userId}`)
+  }
+
+  const handleDeleteUser = (user: any) => {
+    setUserToDelete(user)
+    setShowDeleteDialog(true)
+  }
+
+  const confirmDeleteUser = async () => {
+    if (!userToDelete || !deletePassword || !session?.user?.id) {
+      alert("Password is required to delete user")
+      return
+    }
+
+    setIsDeletingUser(true)
+
+    try {
+      // First verify the current user's password
+      const verifyResponse = await fetch('/api/auth/verify-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: session.user.id,
+          password: deletePassword
+        }),
+      })
+
+      if (!verifyResponse.ok) {
+        alert("Incorrect password. User deletion cancelled.")
+        setIsDeletingUser(false)
+        return
+      }
+
+      // If password is correct, proceed with user deletion
+      const deleteResponse = await fetch(`/api/users/${userToDelete.id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ 
+          deletedBy: session.user.id
+        }),
+      })
+
+      const result = await deleteResponse.json()
+
+      if (deleteResponse.ok && result.success) {
+        alert(`User "${userToDelete.userName}" has been deleted successfully!`)
+        setShowDeleteDialog(false)
+        setUserToDelete(null)
+        setDeletePassword("")
+        window.location.reload()
+      } else {
+        alert(`Error: ${result.error || "Failed to delete user"}`)
+      }
+    } catch (error) {
+      alert("Error deleting user")
+      console.error(error)
+    } finally {
+      setIsDeletingUser(false)
+    }
+  }
+
+  const cancelDeleteUser = () => {
+    setShowDeleteDialog(false)
+    setUserToDelete(null)
+    setDeletePassword("")
   }
 
  
@@ -832,8 +915,10 @@ export default function WarehouseDetailsPage() {
                           <TableHead>Consultation ID</TableHead>
                           <TableHead>Date</TableHead>
                           <TableHead>Student</TableHead>
+                          <TableHead>Matric Number</TableHead>
                           <TableHead>Diagnosis</TableHead>
                           <TableHead>Status</TableHead>
+                          <TableHead>Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -844,6 +929,9 @@ export default function WarehouseDetailsPage() {
                               {new Date(consultation.createdAt).toLocaleDateString()}
                             </TableCell>
                             <TableCell>{consultation.selectedStudent?.name || 'Walk-in Patient'}</TableCell>
+                            <TableCell className="font-mono text-sm">
+                              {consultation.selectedStudent?.matricNumber || 'N/A'}
+                            </TableCell>
                             <TableCell className="max-w-xs truncate">{consultation.diagnosis || 'Not specified'}</TableCell>
                             <TableCell>
                               {consultation.balance == 0 &&
@@ -862,6 +950,19 @@ export default function WarehouseDetailsPage() {
                          </Badge>
                          }
                              
+                            </TableCell>
+                            <TableCell>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => {
+                                  // Show consultation details in a dialog or navigate to detail page
+                                  router.push(`/sup-admin/warehouses/${wareHouseId}/consultations/${consultation.invoiceNo}`)
+                                }}
+                              >
+                                <Eye className="h-3 w-3 mr-1" />
+                                View Details
+                              </Button>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -1009,19 +1110,19 @@ export default function WarehouseDetailsPage() {
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
                                   <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                  <DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleViewUser(user.id)}>
                                     <Eye className="mr-2 h-4 w-4" />
                                     View Profile
                                   </DropdownMenuItem>
-                                  <DropdownMenuItem>
-                                    <Edit className="mr-2 h-4 w-4" />
-                                    Edit Permissions
-                                  </DropdownMenuItem>
+                                  
                                   <DropdownMenuSeparator />
-                                  <DropdownMenuItem className="text-red-600">
+                                  {/* <DropdownMenuItem 
+                                    className="text-red-600"
+                                    onClick={() => handleDeleteUser(user)}
+                                  >
                                     <Trash2 className="mr-2 h-4 w-4" />
-                                    Remove from Warehouse
-                                  </DropdownMenuItem>
+                                    Delete User
+                                  </DropdownMenuItem> */}
                                 </DropdownMenuContent>
                               </DropdownMenu>
                             </TableCell>
@@ -1258,20 +1359,12 @@ export default function WarehouseDetailsPage() {
                     <CardTitle>Performance Summary</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
+                    
                     <div className="flex justify-between">
-                      <span>Total Revenue</span>
-                      <span className="font-medium">{formatCurrency(warehouseData.stats?.totalSales || 0)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Total Orders</span>
+                      <span>Total Consultations</span>
                       <span className="font-medium">{warehouseData.stats?.totalOrders || 0}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span>Average Order Value</span>
-                      <span className="font-medium">
-                        {formatCurrency((warehouseData.stats?.totalSales || 0) / (warehouseData.stats?.totalOrders || 1))}
-                      </span>
-                    </div>
+                    
                     <div className="flex justify-between">
                       <span>Products in Stock</span>
                       <span className="font-medium">{warehouseData.stats?.totalProducts || 0}</span>
@@ -1339,6 +1432,62 @@ export default function WarehouseDetailsPage() {
           warehouseName={warehouseData?.name || "Warehouse"}
           apiEndpoint="/api/sale/daily-analytics"
         />
+
+        {/* Delete User Confirmation Dialog */}
+        <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-red-600" />
+                Confirm User Deletion
+              </DialogTitle>
+              <DialogDescription>
+                {userToDelete && (
+                  <>
+                    You are about to delete user <strong>{userToDelete.userName}</strong> ({userToDelete.email}).
+                    <br /><br />
+                    This action cannot be undone. Please enter your password to confirm.
+                  </>
+                )}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="deletePassword">Your Password</Label>
+                <Input
+                  id="deletePassword"
+                  type="password"
+                  value={deletePassword}
+                  onChange={(e) => setDeletePassword(e.target.value)}
+                  placeholder="Enter your password to confirm deletion"
+                  required
+                />
+              </div>
+            </div>
+            <DialogFooter className="flex gap-2">
+              <Button variant="outline" onClick={cancelDeleteUser} disabled={isDeletingUser}>
+                Cancel
+              </Button>
+              <Button 
+                variant="destructive" 
+                onClick={confirmDeleteUser}
+                disabled={!deletePassword || isDeletingUser}
+              >
+                {isDeletingUser ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete User
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
      </>
   )
 }

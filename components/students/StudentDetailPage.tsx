@@ -88,7 +88,7 @@ export default function StudentDetailPage() {
   const { data: session } = useSession()
   const params = useParams()
   const router = useRouter()
-  const warehouseId = getWareHouseId()
+  const warehouseId = params.id as string
 
   useEffect(() => {
     setEndPoint(`/warehouse/${warehouseId}/${session?.user?.role}`)
@@ -129,7 +129,12 @@ export default function StudentDetailPage() {
   }
 
   const handleViewConsultation = (consultationId: string) => {
-    router.push(`${endpoint}/sales/consultations/${consultationId}`)
+    if(session?.user.role == "supaAdmina"){
+      router.push(`/sup-admin/warehouses/${warehouseId}/consultations/${consultationId}`)
+
+    }else{
+      router.push(`${endpoint}/sales/consultations/${consultationId}`)
+    }
   }
 
   return (
@@ -173,10 +178,12 @@ export default function StudentDetailPage() {
               <h1 className="text-3xl font-bold text-blue-600">{student.name}</h1>
             </div>
           </div>
-          <Button onClick={handleEdit}>
+          {session?.user?.role === "supaAdmina" ? "" : 
+            <Button onClick={handleEdit}>
             <Edit className="mr-2 h-4 w-4" />
             Edit Student
           </Button>
+          }
         </div>
 
         {/* Student Stats */}
@@ -198,7 +205,6 @@ export default function StudentDetailPage() {
             <TabsTrigger value="personal">Personal Information</TabsTrigger>
             <TabsTrigger value="medical">Medical Records</TabsTrigger>
             <TabsTrigger value="consultations">Consultation History</TabsTrigger>
-            <TabsTrigger value="transactions">Transaction History</TabsTrigger>
           </TabsList>
 
           {/* Personal Information Tab */}
@@ -359,9 +365,6 @@ export default function StudentDetailPage() {
                         <TableHead>Date</TableHead>
                         <TableHead>Diagnosis</TableHead>
                         <TableHead>Items</TableHead>
-                        <TableHead>Total</TableHead>
-                        <TableHead>Paid</TableHead>
-                        <TableHead>Balance</TableHead>
                         <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -380,15 +383,7 @@ export default function StudentDetailPage() {
                           <TableCell>
                             {consultation.consultationItems.length} items
                           </TableCell>
-                          <TableCell className="font-medium">
-                            {formatCurrency(consultation.grandTotal)}
-                          </TableCell>
-                          <TableCell className="text-green-600">
-                            {formatCurrency(consultation.amountPaid)}
-                          </TableCell>
-                          <TableCell className={consultation.balance > 0 ? "text-red-600" : "text-green-600"}>
-                            {formatCurrency(consultation.balance)}
-                          </TableCell>
+                          
                           <TableCell>
                             <Button 
                               variant="ghost" 
@@ -412,54 +407,8 @@ export default function StudentDetailPage() {
             </Card>
           </TabsContent>
 
-          {/* Transaction History Tab */}
-          <TabsContent value="transactions" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CreditCard className="h-5 w-5" />
-                  Transaction History ({student.balanceTransaction.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {student.balanceTransaction.length > 0 ? (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Description</TableHead>
-                        <TableHead>Amount</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {student.balanceTransaction.map((transaction) => (
-                        <TableRow key={transaction.id}>
-                          <TableCell>
-                            {new Date(transaction.createdAt).toLocaleDateString()}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={transaction.type === 'credit' ? 'default' : 'destructive'}>
-                              {transaction.type}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>{transaction.description}</TableCell>
-                          <TableCell className={`font-medium ${transaction.type === 'credit' ? 'text-green-600' : 'text-red-600'}`}>
-                            {formatCurrency(transaction.amount)}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <CreditCard className="mx-auto h-12 w-12 mb-4" />
-                    <p>No transaction records found</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+         
+        
         </Tabs>
       </div>
     </>

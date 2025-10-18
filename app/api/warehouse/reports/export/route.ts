@@ -49,15 +49,15 @@ export async function POST(req: NextRequest) {
         }
       });
 
-      // CSV headers
-      csvData = 'Product Name,Barcode,Quantity,Unit,Cost,Wholesale Price,Retail Price,Stock Value,Status\n';
+      // CSV headers (removed price-related columns)
+      csvData = 'Product Name,Barcode,Quantity,Unit,Status,Last Updated\n';
       
       // CSV rows
       products.forEach(product => {
         const status = product.quantity === 0 ? 'Out of Stock' : product.quantity <= 10 ? 'Low Stock' : 'In Stock';
-        const stockValue = product.quantity * product.cost;
+        const lastUpdated = new Date(product.updatedAt).toLocaleDateString();
         
-        csvData += `"${product.name}","${product.barcode}",${product.quantity},"${product.unit}",${product.cost},${product.wholeSalePrice},${product.retailPrice},${stockValue},"${status}"\n`;
+        csvData += `"${product.name}","${product.barcode}",${product.quantity},"${product.unit}","${status}","${lastUpdated}"\n`;
       });
 
       filename = `${warehouse.warehouseCode}_inventory_${new Date().toISOString().split('T')[0]}.csv`;
@@ -99,17 +99,18 @@ export async function POST(req: NextRequest) {
         }
       });
 
-      // CSV headers
-      csvData = 'Invoice No,Date,Customer,Items,Total Amount,Balance,Status\n';
+      // CSV headers (removed money-related columns)
+      csvData = 'Invoice No,Date,Student,Student Matric,Items Count,Diagnosis,Status\n';
       
       // CSV rows
       sales.forEach((sale:any) => {
-        const status = sale.balance === 0 ? 'Paid' : sale.balance === sale.grandTotal ? 'Unpaid' : 'Partial';
+        const status = sale.balance === 0 ? 'Completed' : sale.balance === sale.grandTotal ? 'Pending' : 'Partial';
         const date = new Date(sale.createdAt).toLocaleDateString();
-        // Corrected property access from `selectedCustomer` to `Customer`.
-        const customer = sale.Customer?.name || 'Walk-in Customer';
+        const student = sale.selectedStudent?.name || 'Walk-in Patient';
+        const matricNumber = sale.selectedStudent?.matricNumber || 'N/A';
+        const diagnosis = sale.diagnosis || 'Not specified';
         
-        csvData += `"${sale.invoiceNo}","${date}","${customer}",${sale.saleItems.length},${sale.grandTotal},${sale.balance},"${status}"\n`;
+        csvData += `"${sale.invoiceNo}","${date}","${student}","${matricNumber}",${sale.consultationItems.length},"${diagnosis}","${status}"\n`;
       });
 
       filename = `${warehouse.warehouseCode}_sales_${year}_${month.toString().padStart(2, '0')}.csv`;
@@ -166,39 +167,54 @@ export async function POST(req: NextRequest) {
       csvData += `Period: ${new Date(parseInt(year), parseInt(month) - 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}\n`;
       csvData += `Generated: ${new Date().toLocaleDateString()}\n\n`;
 
-      // Summary section
-      const totalRevenue = sales.reduce((sum:any, s:any) => sum + (s.grandTotal || 0), 0);
-      const totalStockValue = products.reduce((sum:any, p:any) => sum + (p.quantity * p.cost), 0);
+      // Summary section (removed money-related data)
+      const totalQuantityDispensed = sales.reduce((sum:any, s:any) => sum + (s.consultationItems?.reduce((itemSum:any, item:any) => itemSum + item.quantity, 0) || 0), 0);
+      const totalMedicinesInStock = products.reduce((sum:any, p:any) => sum + p.quantity, 0);
       
       csvData += 'SUMMARY\n';
-      csvData += `Total Products,${products.length}\n`;
-      csvData += `Total Sales,${sales.length}\n`;
-      csvData += `Total Revenue,${totalRevenue}\n`;
-      csvData += `Total Stock Value,${totalStockValue}\n`;
+      csvData += `Report Period,${new Date(parseInt(year), parseInt(month) - 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}\n`;
+      csvData += `Total Medicines,${products.length}\n`;
+      csvData += `Total Consultations,${sales.length}\n`;
+      csvData += `Total Medicines Dispensed,${totalQuantityDispensed}\n`;
+      csvData += `Total Medicines in Stock,${totalMedicinesInStock}\n`;
       csvData += `Low Stock Items,${products.filter(p => p.quantity <= 10).length}\n`;
       csvData += `Out of Stock Items,${products.filter(p => p.quantity === 0).length}\n\n`;
 
-      // Inventory section
+      // Inventory section (removed price-related data)
       csvData += 'INVENTORY\n';
-      csvData += 'Product Name,Barcode,Quantity,Unit,Cost,Wholesale Price,Retail Price,Stock Value,Status\n';
+      csvData += 'Product Name,Barcode,Quantity,Unit,Status,Last Updated\n';
       
       products.forEach(product => {
         const status = product.quantity === 0 ? 'Out of Stock' : product.quantity <= 10 ? 'Low Stock' : 'In Stock';
-        const stockValue = product.quantity * product.cost;
+        const lastUpdated = new Date(product.updatedAt).toLocaleDateString();
         
-        csvData += `"${product.name}","${product.barcode}",${product.quantity},"${product.unit}",${product.cost},${product.wholeSalePrice},${product.retailPrice},${stockValue},"${status}"\n`;
+        csvData += `"${product.name}","${product.barcode}",${product.quantity},"${product.unit}","${status}","${lastUpdated}"\n`;
       });
 
-      csvData += '\nSALES\n';
-      csvData += 'Invoice No,Date,Customer,Items,Total Amount,Balance,Status\n';
+      csvData += '\nCONSULTATIONS\n';
+      csvData += 'Invoice No,Date,Student,Student Matric,Items Count,Diagnosis,Status\n';
       
       sales.forEach(sale => {
-        const status = sale.balance === 0 ? 'Paid' : sale.balance === sale.grandTotal ? 'Unpaid' : 'Partial';
+        const status = sale.balance === 0 ? 'Completed' : sale.balance === sale.grandTotal ? 'Pending' : 'Partial';
         const date = new Date(sale.createdAt).toLocaleDateString();
-        // Corrected property access
-        const customer = sale.selectedStudent?.name || 'Walk-in Customer';
+        const student = sale.selectedStudent?.name || 'Walk-in Patient';
+        const matricNumber = sale.selectedStudent?.matricNumber || 'N/A';
+        const diagnosis = sale.diagnosis || 'Not specified';
         
-        csvData += `"${sale.invoiceNo}","${date}","${customer}",${sale.consultationItems.length},${sale.grandTotal},${sale.balance},"${status}"\n`;
+        csvData += `"${sale.invoiceNo}","${date}","${student}","${matricNumber}",${sale.consultationItems.length},"${diagnosis}","${status}"\n`;
+      });
+
+      // Add detailed consultation items section
+      csvData += '\nDETAILED CONSULTATION ITEMS\n';
+      csvData += 'Invoice No,Date,Student,Medicine Name,Quantity Dispensed,Dosage,Frequency,Duration\n';
+      
+      sales.forEach(sale => {
+        const date = new Date(sale.createdAt).toLocaleDateString();
+        const student = sale.selectedStudent?.name || 'Walk-in Patient';
+        
+        sale.consultationItems.forEach((item:any) => {
+          csvData += `"${sale.invoiceNo}","${date}","${student}","${item.productName}",${item.quantity},"${item.dosage || 'N/A'}","${item.frequency || 'N/A'}","${item.duration || 'N/A'}"\n`;
+        });
       });
 
       filename = `${warehouse.warehouseCode}_monthly_report_${year}_${month.toString().padStart(2, '0')}.csv`;

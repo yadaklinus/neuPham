@@ -121,30 +121,73 @@ export async function DELETE(
     const {consultationId} = await context.params
 
     try {
-        const consultation = await offlinePrisma.consultation.findUnique({
-            where: { invoiceNo: consultationId }
-        });
+        const { userId } = await req.json();
 
-        if (!consultation) {
-            return NextResponse.json("Consultation not found", { status: 404 });
+        if (!userId) {
+            return NextResponse.json({ error: "User ID is required to perform deletion." }, { status: 400 });
         }
 
-        // Soft delete the consultation
-        await offlinePrisma.consultation.update({
-            where: { invoiceNo: consultationId },
-            data: {
-                isDeleted: true,
-                sync: false,
-                updatedAt: new Date()
+        // Use a transaction for deletion and stock restoration
+        await offlinePrisma.$transaction(async (tx) => {
+            const consultation = await tx.consultation.findUnique({
+                where: { invoiceNo: consultationId, isDeleted: false },
+                include: { consultationItems: true }
+            });
+
+            if (!consultation) {
+                throw new Error("Consultation not found or already deleted");
             }
+
+            // 1. Restore medicine quantities
+            for (const item of consultation.consultationItems) {
+                if (item.productId) {
+                    const product = await tx.product.findUnique({ 
+                        where: { id: item.productId }
+                    });
+                    
+                    if (product) {
+                        await tx.product.update({
+                            where: { id: item.productId },
+                            data: {
+                                quantity: {
+                                    increment: item.quantity
+                                }
+                            }
+                        });
+
+                        // 2. Create a stock tracking record for the reversal
+                        
+                    }
+                }
+            }
+
+            // 3. Soft delete the consultation
+            await tx.consultation.update({
+                where: { invoiceNo: consultationId },
+                data: { 
+                    isDeleted: true,
+                    sync: false,
+                    updatedAt: new Date()
+                }
+            });
+            await tx.consultationItem.updateMany({
+                where: { consultationId: consultationId },
+                data: { 
+                    isDeleted: true,
+                    sync: false,
+                    
+                }
+            });
         });
 
         return NextResponse.json({
-            message: "Consultation deleted successfully"
+            message: "Consultation cancelled successfully and products returned to stock"
         }, { status: 200 });
-    } catch (error) {
+    } catch (error: any) {
         console.error("Consultation deletion error:", error);
-        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+        return NextResponse.json({ 
+            error: error.message || "Failed to cancel consultation" 
+        }, { status: 500 });
     } finally {
         await offlinePrisma.$disconnect();
     }

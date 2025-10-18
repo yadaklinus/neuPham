@@ -19,7 +19,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import { Stethoscope, Plus, Search, Edit, Eye, Printer, Calendar, DollarSign, User, Trash2, FileText } from "lucide-react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { getWareHouseId } from "@/hooks/get-werehouseId"
 import fetchWareHouseData from "@/hooks/fetch-invidual-data"
@@ -33,9 +33,9 @@ export default function ConsultationListPage() {
   const [dateFilter, setDateFilter] = useState("all")
   const [endpoint, setEndPoint] = useState("")
   const { data: session } = useSession()
-
+  const params = useParams()
   const router = useRouter()
-  const warehouseId = getWareHouseId()
+  const warehouseId = params.id as string
   const { data: consultationResponse, loading, error } = fetchWareHouseData("/api/consultation/list", { warehouseId })
   
   useEffect(() => {
@@ -86,20 +86,19 @@ export default function ConsultationListPage() {
     }
 
     try {
-      const response = await fetch("/api/consultation", {
+      const response = await fetch(`/api/consultation/${consultationId}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ 
-          consultationId,
           userId: session?.user?.id || "system" // Provide user ID for tracking
         }),
       })
 
       const result = await response.json()
 
-      if (response.ok && result.success) {
+      if (response.ok) {
         alert(result.message || "Consultation deleted successfully and products returned to stock!")
         window.location.reload()
       } else {
@@ -239,6 +238,7 @@ export default function ConsultationListPage() {
                   <TableHead>Date & Time</TableHead>
                   <TableHead>Student</TableHead>
                   <TableHead>Diagnosis</TableHead>
+                  <TableHead>Consultant</TableHead>
                   <TableHead>Items</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Actions</TableHead>
@@ -272,6 +272,11 @@ export default function ConsultationListPage() {
                     <TableCell>
                       <div className="max-w-[200px] truncate">
                         {consultation.diagnosis || 'No diagnosis'}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm">
+                        {consultation.createdByUser?.userName || consultation.createdBy || 'Unknown User'}
                       </div>
                     </TableCell>
                     <TableCell>

@@ -219,14 +219,14 @@ export default function SuppliersPage() {
               <h1 className="text-2xl font-semibold text-orange-600">Suppliers</h1>
             </div>
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm">
+              {/* <Button variant="outline" size="sm">
                 <Upload className="mr-2 h-4 w-4" />
                 Import
               </Button>
               <Button variant="outline" size="sm">
                 <Download className="mr-2 h-4 w-4" />
                 Export
-              </Button>
+              </Button> */}
               <Button onClick={handleAddSupplier}>
                 <Plus className="mr-2 h-4 w-4" />
                 Add Supplier

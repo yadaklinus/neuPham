@@ -30,6 +30,7 @@ import {
 } from "lucide-react"
 import { formatCurrency } from "@/lib/utils"
 import { getWareHouseId } from "@/hooks/get-werehouseId"
+import { useSession } from "next-auth/react"
 
 interface PurchaseItem {
   id: string
@@ -68,23 +69,28 @@ export default function ViewIndividualPurchasePage() {
   const router = useRouter()
   const [purchase, setPurchase] = useState<Purchase | null>(null)
   const [loading, setLoading] = useState(true)
+  const [endPoint, setEndPoint] = useState("")
   const warehouseId = getWareHouseId()
+  const { data: session } = useSession()
+
+  useEffect(() => {
+    setEndPoint(`/warehouse/${warehouseId}/${session?.user?.role}`)
+  }, [session, warehouseId])
 
   useEffect(() => {
     const fetchPurchase = async () => {
       try {
-        const response = await fetch('/api/purchase/list', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ warehouseId }),
-        })
+        const response = await fetch(`/api/purchase/${params.purchaseId}`)
 
         if (response.ok) {
-          const purchases = await response.json()
-          const foundPurchase = purchases.find((p: Purchase) => p.id === params.purchaseId)
-          setPurchase(foundPurchase || null)
+          const result = await response.json()
+          if (result.success) {
+            setPurchase(result.data)
+          } else {
+            console.error('Failed to fetch purchase:', result.error)
+          }
+        } else {
+          console.error('Failed to fetch purchase:', response.statusText)
         }
       } catch (error) {
         console.error('Error fetching purchase:', error)
@@ -96,7 +102,7 @@ export default function ViewIndividualPurchasePage() {
     if (params.purchaseId) {
       fetchPurchase()
     }
-  }, [params.purchaseId, warehouseId])
+  }, [params.purchaseId])
 
   const handlePrint = () => {
     if (!purchase) return
@@ -266,11 +272,11 @@ export default function ViewIndividualPurchasePage() {
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem>
-                  <BreadcrumbLink href="/dashboard">Home</BreadcrumbLink>
+                  <BreadcrumbLink href={`${endPoint}/dashboard`}>Home</BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
-                  <BreadcrumbLink href="/purchases/list">Purchases</BreadcrumbLink>
+                  <BreadcrumbLink href={`${endPoint}/purchases/list`}>Purchases</BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
