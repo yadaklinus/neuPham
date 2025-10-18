@@ -916,6 +916,7 @@ export default function WarehouseDetailsPage() {
                           <TableHead>Date</TableHead>
                           <TableHead>Student</TableHead>
                           <TableHead>Matric Number</TableHead>
+                          <TableHead>Consultant</TableHead>
                           <TableHead>Diagnosis</TableHead>
                           <TableHead>Status</TableHead>
                           <TableHead>Actions</TableHead>
@@ -932,6 +933,7 @@ export default function WarehouseDetailsPage() {
                             <TableCell className="font-mono text-sm">
                               {consultation.selectedStudent?.matricNumber || 'N/A'}
                             </TableCell>
+                            <TableCell>{consultation.createdByUser?.userName || 'Walk-in Patient'}</TableCell>
                             <TableCell className="max-w-xs truncate">{consultation.diagnosis || 'Not specified'}</TableCell>
                             <TableCell>
                               {consultation.balance == 0 &&
@@ -1406,7 +1408,7 @@ export default function WarehouseDetailsPage() {
                       onClick={() => exportReport('sales')}
                     >
                       <ShoppingCart className="mr-2 h-4 w-4" />
-                      Export Sales Report
+                      Export Consultation Report
                     </Button>
                     <Button 
                       variant="outline" 

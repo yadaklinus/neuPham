@@ -76,10 +76,15 @@ interface ConsultationData {
     method: string
     amount: number
   }>
+  createdByUser: Array<{
+    userName: {
+      userName:any
+    }
+  }>
 }
 
 export default function ConsultationDetailPage() {
-  const [consultation, setConsultation] = useState<ConsultationData | null>(null)
+  const [consultation, setConsultation] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [endpoint, setEndPoint] = useState("")
   const { data: session } = useSession()
@@ -106,6 +111,7 @@ export default function ConsultationDetailPage() {
         console.error("Error fetching consultation:", error)
       } finally {
         setLoading(false)
+        
       }
     }
 
@@ -214,10 +220,10 @@ export default function ConsultationDetailPage() {
                   <label className="text-sm font-medium text-muted-foreground">Status</label>
                   <div className="mt-1">{getStatusBadge()}</div>
                 </div>
-                {/* <div>
-                  <label className="text-sm font-medium text-muted-foreground">Total Amount</label>
-                  <p className="text-lg font-semibold text-green-600">{formatCurrency(consultation.grandTotal)}</p>
-                </div> */}
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Consulted By </label>
+                  <p className="text-lg font-semibold text-green-600">{consultation?.createdByUser.userName || ""}</p>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -366,7 +372,7 @@ export default function ConsultationDetailPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {consultation.consultationItems.map((item, index) => (
+                {consultation.consultationItems.map((item:any, index:any) => (
                   <TableRow key={index}>
                     <TableCell>
                       <div>

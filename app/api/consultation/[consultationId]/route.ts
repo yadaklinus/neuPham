@@ -41,7 +41,8 @@ export async function GET(
                         }
                     }
                 },
-                paymentMethod: true
+                paymentMethod: true,
+                createdByUser:true,
             }
         });
 

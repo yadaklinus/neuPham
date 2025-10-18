@@ -46,6 +46,7 @@ export async function GET(req: NextRequest) {
                         matricNumber: true
                     }
                 }
+
             },
             orderBy: {
                 timestamp: 'desc'
@@ -62,7 +63,8 @@ export async function GET(req: NextRequest) {
             include: {
                 consultation: {
                     include: {
-                        selectedStudent: true
+                        selectedStudent: true,
+                        createdByUser:true
                     }
                 }
             },
@@ -83,7 +85,7 @@ export async function GET(req: NextRequest) {
             include: {
                 Purchase: {
                     include: {
-                        Supplier: true
+                        Supplier: true,
                     }
                 }
             },
@@ -180,6 +182,8 @@ export async function GET(req: NextRequest) {
             runningBalance -= movement.quantity
             return movementWithBalance
         })
+
+        console.log(movementsWithBalance)
 
         return NextResponse.json({
             product: {

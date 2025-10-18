@@ -201,7 +201,7 @@ export default function StudentDetailPage() {
         </div>
 
         <Tabs defaultValue="personal" className="space-y-6">
-          <TabsList>
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 h-auto">
             <TabsTrigger value="personal">Personal Information</TabsTrigger>
             <TabsTrigger value="medical">Medical Records</TabsTrigger>
             <TabsTrigger value="consultations">Consultation History</TabsTrigger>

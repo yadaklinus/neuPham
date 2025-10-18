@@ -23,7 +23,9 @@ export async function POST(
             isDeleted: false, // ✅ only include consultations that are not deleted
           },
           include: {
-            consultationItems: true
+            consultationItems: true,
+            createdByUser:true,
+            selectedStudent:true
           }
         }
       }
@@ -46,6 +48,8 @@ export async function POST(
             },
             include: {
               consultationItems: true,
+              createdByUser:true,
+              selectedStudent:true
             },
           },
         },

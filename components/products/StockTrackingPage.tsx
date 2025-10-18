@@ -411,9 +411,9 @@ export default function StockTrackingPage() {
                       <TableCell>
                         {movement.previousStock !== undefined && movement.newStock !== undefined ? (
                           <div className="text-sm">
-                            <span className="text-muted-foreground">{movement.previousStock}</span>
+                            <span className="text-muted-foreground">{movement?.previousStock}</span>
                             <span className="mx-1">→</span>
-                            <span className="font-medium">{movement.newStock}</span>
+                            <span className="font-medium">{movement?.newStock}</span>
                           </div>
                         ) : (
                           <span className="text-muted-foreground">N/A</span>
