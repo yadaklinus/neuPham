@@ -380,10 +380,7 @@ export default function DashboardPage() {
                           <div className="text-xs text-muted-foreground">{consultation.itemsCount} medicines</div>
                         </div>
                         <div className="text-right">
-                          <div className="font-medium">{formatCurrency(consultation.grandTotal)}</div>
-                          <div className="text-sm text-muted-foreground capitalize">
-                            {consultation.paymentMethod.replace("_", " ")}
-                          </div>
+                         
                           <div className="text-xs text-muted-foreground">
                             {new Date(consultation.createdAt).toLocaleDateString()}
                           </div>
@@ -444,7 +441,7 @@ export default function DashboardPage() {
                   <Package className="h-5 w-5" />
                   Most Prescribed Medicines
                 </CardTitle>
-                <CardDescription>Most prescribed medicines by revenue and volume</CardDescription>
+                <CardDescription>Most prescribed medicines by volume</CardDescription>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>

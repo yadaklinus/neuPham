@@ -178,12 +178,12 @@ export default function StudentDetailPage() {
               <h1 className="text-3xl font-bold text-blue-600">{student.name}</h1>
             </div>
           </div>
-          {session?.user?.role === "supaAdmina" ? "" : 
+          {/* {session?.user?.role === "supaAdmina" ? "" : 
             <Button onClick={handleEdit}>
             <Edit className="mr-2 h-4 w-4" />
             Edit Student
           </Button>
-          }
+          } */}
         </div>
 
         {/* Student Stats */}

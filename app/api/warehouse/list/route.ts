@@ -22,6 +22,7 @@ export async function POST(
           where: {
             isDeleted: false, // ✅ only include consultations that are not deleted
           },
+          orderBy: { createdAt: 'desc' },
           include: {
             consultationItems: true,
             createdByUser:true,

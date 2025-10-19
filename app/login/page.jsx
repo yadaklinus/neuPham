@@ -77,12 +77,15 @@ export default function LoginForm() {
       <div className="w-full max-w-sm">
     <div className={"flex flex-col gap-6"}>
       <Card>
-        <CardHeader>
-          <CardTitle>Login to your account</CardTitle>
-          <CardDescription>
-            Enter your email below to login to your account
-          </CardDescription>
-        </CardHeader>
+      <CardHeader>
+              {/* --- Logo Added Here --- */}
+              <img src="./neu.jpg" width={"50vh"} alt="" />
+               {/* --- End of Logo --- */}
+              <CardTitle>Login to your account</CardTitle>
+              <CardDescription>
+                Enter your details below to login
+              </CardDescription>
+      </CardHeader>
         <CardContent>
           <form onSubmit={handleFormSubmit}>
             <div className="flex flex-col gap-6">
@@ -106,10 +109,8 @@ export default function LoginForm() {
                 <Button disabled={loading} type="submit" className="w-full">
                   Login
                 </Button>
-               
               </div>
             </div>
-            
           </form>
         </CardContent>
       </Card>

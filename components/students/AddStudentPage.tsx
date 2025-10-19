@@ -76,7 +76,21 @@ export default function AddStudentPage() {
       }
 
       toast.success('Student created successfully!')
-      router.push(`${endPoint}/people/customers`)
+      //router.push(`${endPoint}/people/customers`)
+      setFormData({
+        name: "",
+        matricNumber: "",
+        email: "",
+        phone: "",
+        address: "",
+        bloodGroup: "",
+        genotype: "",
+        allergies: "",
+        emergencyContact: "",
+        emergencyPhone: "",
+        department: "",
+        level: ""
+      })
     } catch (error: any) {
       console.error('Error creating student:', error)
       toast.error(error.message || 'Failed to create student')

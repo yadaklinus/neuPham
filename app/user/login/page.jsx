@@ -71,11 +71,12 @@ export default function LoginForm() {
     <div className={cn("flex flex-col gap-6")}>
       <Card>
         <CardHeader>
-          <CardTitle>User Login to your account</CardTitle>
-          <CardDescription>
-            Enter your email below to login to your account
-          </CardDescription>
-        </CardHeader>
+            <img src="/neu.jpg" width={"50vh"} alt="" />
+            <CardTitle>User Login to your account</CardTitle>
+            <CardDescription>
+              Enter your email below to login to your account
+            </CardDescription>
+          </CardHeader>
         <CardContent>
           <form onSubmit={handleFormSubmit}>
             <div className="flex flex-col gap-6">
